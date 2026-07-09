@@ -1,11 +1,17 @@
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views import View
+from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
 from .models import Animal
 from .forms import AnimalForm
+from .pdf_parser import PDFAnalyticsService
+
+logger = logging.getLogger(__name__)
 
 
 class AnimalListView(LoginRequiredMixin, ListView):
@@ -113,3 +119,29 @@ class AnimalDeleteView(LoginRequiredMixin, DeleteView):
         animal = self.get_object()
         messages.success(request, f'Animal {animal.animal_id} deleted successfully.')
         return super().delete(request, *args, **kwargs)
+
+
+class AnimalAnalyticsView(LoginRequiredMixin, TemplateView):
+    """View to render the dedicated animal analytics page"""
+    template_name = 'animals/analytics.html'
+    login_url = '/auth/login/'
+
+
+class AnimalAnalyticsDataView(LoginRequiredMixin, View):
+    """JSON API endpoint returning cleaned analytics data from PDF"""
+    login_url = '/auth/login/'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            data = PDFAnalyticsService.get_analytics_data()
+            return JsonResponse({
+                "status": "success",
+                "count": len(data),
+                "data": data
+            })
+        except Exception as e:
+            logger.error(f"Error serving analytics data: {e}")
+            return JsonResponse({
+                "status": "error",
+                "message": "Failed to retrieve analytics data."
+            }, status=500)

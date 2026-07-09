@@ -12,6 +12,9 @@
         <p class="page-subtitle">Manage and monitor your livestock animals</p>
     </div>
     <div class="page-actions">
+        <a href="{% url 'animals:analytics' %}" class="btn btn-analytics">
+            <i class="fa-solid fa-chart-simple"></i> View Analytics
+        </a>
         <a href="{% url 'animals:create' %}" class="btn btn-primary">
             <i class="fa-solid fa-plus"></i> Add New Animal
         </a>
@@ -66,35 +69,28 @@
                     <tr>
                         <th>Animal ID</th>
                         <th>Name</th>
-                        <th>Species</th>
-                        <th>Breed</th>
-                        <th>Age</th>
+                        <th>DOB (Age)</th>
+                        <th>Parity</th>
+                        <th>Vaginal Temp</th>
                         <th>Weight</th>
-                        <th>Health Status</th>
-                        <th>Reproductive Status</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for animal in animals %}
-                    <tr>
+                    <tr onclick="window.location='{% url 'animals:detail' animal.pk %}'" style="cursor: pointer;">
                         <td><strong>{{ animal.animal_id }}</strong></td>
                         <td>{{ animal.name }}</td>
-                        <td>{{ animal.species }}</td>
-                        <td>{{ animal.breed }}</td>
-                        <td>{{ animal.age }} years</td>
+                        <td>
+                            {% if animal.date_of_birth %}
+                                {{ animal.date_of_birth|date:"M d, Y" }}
+                                <div class="text-muted" style="font-size: 0.8rem;">{{ animal.age }} yrs</div>
+                            {% else %}
+                                {{ animal.age }} years
+                            {% endif %}
+                        </td>
+                        <td>{{ animal.parity|default:"-" }}</td>
+                        <td>{% if animal.vagina_temperature %}{{ animal.vagina_temperature }} °C{% else %}-{% endif %}</td>
                         <td>{{ animal.weight }} kg</td>
-                        <td>
-                            <span class="badge badge-{{ animal.health_status }}">{{ animal.get_health_status_display }}</span>
-                        </td>
-                        <td>
-                            <span class="badge badge-info">{{ animal.get_reproductive_status_display }}</span>
-                        </td>
-                        <td class="actions-cell">
-                            <a href="{% url 'animals:detail' animal.pk %}" class="btn-icon" title="View Details" style="display: inline-flex; align-items: center; justify-content: center;"><i class="fa-solid fa-eye" style="font-size: 0.875rem;"></i></a>
-                            <a href="{% url 'animals:edit' animal.pk %}" class="btn-icon" title="Edit" style="display: inline-flex; align-items: center; justify-content: center;"><i class="fa-solid fa-pen" style="font-size: 0.875rem;"></i></a>
-                            <a href="{% url 'animals:delete' animal.pk %}" class="btn-icon btn-icon-danger" title="Delete" style="display: inline-flex; align-items: center; justify-content: center;"><i class="fa-solid fa-trash" style="font-size: 0.875rem;"></i></a>
-                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -144,11 +140,43 @@
 {% endif %}
 
 <style>
+.btn-analytics {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-analytics:hover {
+    background: var(--hover-bg);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.btn-analytics i {
+    color: var(--accent-color);
+    font-size: 0.95rem;
+    transition: transform 0.2s ease;
+}
+
+.btn-analytics:hover i {
+    transform: scale(1.15);
+}
+
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
+}
+
+.page-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
 }
 
 .page-title {
@@ -338,6 +366,21 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
+    }
+    
+    .page-actions {
+        width: 100%;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .page-actions .btn {
+        flex: 1;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     
     .filters-row {

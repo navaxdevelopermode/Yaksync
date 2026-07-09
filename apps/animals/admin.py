@@ -4,19 +4,28 @@ from .models import Animal
 
 @admin.register(Animal)
 class AnimalAdmin(admin.ModelAdmin):
-    list_display = ['animal_id', 'name', 'species', 'breed', 'age', 'health_status', 'reproductive_status', 'created_at']
-    list_filter = ['species', 'health_status', 'reproductive_status', 'created_at']
-    search_fields = ['animal_id', 'name', 'species', 'breed']
-    readonly_fields = ['registration_date', 'created_at', 'updated_at']
+    list_display = [
+        'animal_id', 'name', 'date_of_birth', 'age', 'parity', 
+        'vagina_temperature', 'health_status', 'reproductive_status'
+    ]
+    list_filter = ['species', 'breed', 'health_status', 'reproductive_status', 'breeding_method']
+    search_fields = ['animal_id', 'name', 'dam', 'sire', 'description']
+    readonly_fields = ['age', 'registration_date', 'created_at', 'updated_at']
     fieldsets = (
-        ('Identification', {
-            'fields': ('animal_id', 'name', 'species', 'breed')
+        ('Identification & Specs', {
+            'fields': ('animal_id', 'name', 'species', 'breed', 'description')
         }),
-        ('Physical Attributes', {
-            'fields': ('age', 'weight')
+        ('Birth & Physical Attributes', {
+            'fields': ('date_of_birth', 'age', 'weight')
         }),
-        ('Health & Reproductive', {
-            'fields': ('health_status', 'reproductive_status')
+        ('Reproductive Measurements', {
+            'fields': (
+                'vulva_length', 'vaginal_depth', 'distance_to_cervix', 
+                'vaginal_diameter', 'parity', 'vagina_temperature'
+            )
+        }),
+        ('Health & Breeding', {
+            'fields': ('health_status', 'reproductive_status', 'dam', 'sire', 'breeding_method')
         }),
         ('Metadata', {
             'fields': ('created_by', 'registration_date', 'created_at', 'updated_at')

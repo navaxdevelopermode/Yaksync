@@ -74,12 +74,12 @@
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="{{ form.age.id_for_label }}" class="form-label">
-                            {{ form.age.label }} <span class="required">*</span>
+                        <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">
+                            {{ form.date_of_birth.label }} <span class="required">*</span>
                         </label>
-                        {{ form.age }}
-                        {% if form.age.errors %}
-                            <div class="form-error">{{ form.age.errors.0 }}</div>
+                        {{ form.date_of_birth }}
+                        {% if form.date_of_birth.errors %}
+                            <div class="form-error">{{ form.date_of_birth.errors.0 }}</div>
                         {% endif %}
                     </div>
                     
@@ -90,6 +90,125 @@
                         {{ form.weight }}
                         {% if form.weight.errors %}
                             <div class="form-error">{{ form.weight.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                        {{ form.description.label }}
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="form-error">{{ form.description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Pedigree & Breeding</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.dam.id_for_label }}" class="form-label">
+                            {{ form.dam.label }}
+                        </label>
+                        {{ form.dam }}
+                        {% if form.dam.errors %}
+                            <div class="form-error">{{ form.dam.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.sire.id_for_label }}" class="form-label">
+                            {{ form.sire.label }}
+                        </label>
+                        {{ form.sire }}
+                        {% if form.sire.errors %}
+                            <div class="form-error">{{ form.sire.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.breeding_method.id_for_label }}" class="form-label">
+                            {{ form.breeding_method.label }}
+                        </label>
+                        {{ form.breeding_method }}
+                        {% if form.breeding_method.errors %}
+                            <div class="form-error">{{ form.breeding_method.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Reproductive & Anatomical Details</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.parity.id_for_label }}" class="form-label">
+                            {{ form.parity.label }}
+                        </label>
+                        {{ form.parity }}
+                        {% if form.parity.errors %}
+                            <div class="form-error">{{ form.parity.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.vagina_temperature.id_for_label }}" class="form-label">
+                            {{ form.vagina_temperature.label }}
+                        </label>
+                        {{ form.vagina_temperature }}
+                        {% if form.vagina_temperature.errors %}
+                            <div class="form-error">{{ form.vagina_temperature.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.vulva_length.id_for_label }}" class="form-label">
+                            {{ form.vulva_length.label }}
+                        </label>
+                        {{ form.vulva_length }}
+                        {% if form.vulva_length.errors %}
+                            <div class="form-error">{{ form.vulva_length.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.vaginal_depth.id_for_label }}" class="form-label">
+                            {{ form.vaginal_depth.label }}
+                        </label>
+                        {{ form.vaginal_depth }}
+                        {% if form.vaginal_depth.errors %}
+                            <div class="form-error">{{ form.vaginal_depth.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.distance_to_cervix.id_for_label }}" class="form-label">
+                            {{ form.distance_to_cervix.label }}
+                        </label>
+                        {{ form.distance_to_cervix }}
+                        {% if form.distance_to_cervix.errors %}
+                            <div class="form-error">{{ form.distance_to_cervix.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.vaginal_diameter.id_for_label }}" class="form-label">
+                            {{ form.vaginal_diameter.label }}
+                        </label>
+                        {{ form.vaginal_diameter }}
+                        {% if form.vaginal_diameter.errors %}
+                            <div class="form-error">{{ form.vaginal_diameter.errors.0 }}</div>
                         {% endif %}
                     </div>
                 </div>

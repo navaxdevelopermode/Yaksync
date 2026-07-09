@@ -1,0 +1,1520 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Animal Analytics - YakSync{% endblock %}
+
+{% block page_title %}Animal Analytics{% endblock %}
+
+{% block content %}
+<!-- Back to directory and Header -->
+<div class="analytics-header">
+    <div class="header-nav">
+        <a href="{% url 'animals:list' %}" class="back-link">
+            <i class="fa-solid fa-arrow-left"></i> Back to Animal Directory
+        </a>
+    </div>
+    <div class="header-title-section">
+        <h2 class="page-title">Animal Analytics</h2>
+        <p class="page-subtitle">Visual insights into reproductive measurements, body characteristics, breeding history, temperature, and individual animal variation.</p>
+    </div>
+</div>
+
+<!-- Dynamic Filter Panel -->
+<div class="card filter-card">
+    <div class="card-body">
+        <div class="filter-controls">
+            <div class="filter-group-item search-box">
+                <label for="idSearch">Search Yak ID</label>
+                <div class="input-icon-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="idSearch" class="form-input-field" placeholder="e.g. Yak 697">
+                </div>
+            </div>
+            
+            <div class="filter-group-item">
+                <label for="breedingMethodFilter">Breeding Method</label>
+                <select id="breedingMethodFilter" class="form-input-field">
+                    <option value="">All Methods</option>
+                    <option value="Natural">Natural</option>
+                    <option value="Artificial Insemination">Artificial Insemination</option>
+                </select>
+            </div>
+            
+            <div class="filter-group-item">
+                <label for="parityFilter">Parity</label>
+                <select id="parityFilter" class="form-input-field">
+                    <option value="">All Parities</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="6">6</option>
+                </select>
+            </div>
+            
+            <div class="filter-actions-group">
+                <button id="resetFiltersBtn" class="btn btn-secondary-outline">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Reset Filters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Summary Cards -->
+<div class="summary-cards-grid">
+    <div class="kpi-card anim-stagger">
+        <div class="kpi-icon-wrapper blue-icon">
+            <i class="fa-solid fa-cow"></i>
+        </div>
+        <div class="kpi-content">
+            <span class="kpi-label">Total Animals</span>
+            <h3 class="kpi-value" id="kpiTotalAnimals">0</h3>
+            <span class="kpi-explanation">Count of recorded yaks in research data</span>
+        </div>
+    </div>
+    
+    <div class="kpi-card anim-stagger">
+        <div class="kpi-icon-wrapper green-icon">
+            <i class="fa-solid fa-weight-hanging"></i>
+        </div>
+        <div class="kpi-content">
+            <span class="kpi-label">Average Weight</span>
+            <h3 class="kpi-value" id="kpiAvgWeight">0 kg</h3>
+            <span class="kpi-explanation">Mean body weight of current selection</span>
+        </div>
+    </div>
+    
+    <div class="kpi-card anim-stagger">
+        <div class="kpi-icon-wrapper purple-icon">
+            <i class="fa-solid fa-ruler-vertical"></i>
+        </div>
+        <div class="kpi-content">
+            <span class="kpi-label">Avg Vaginal Depth</span>
+            <h3 class="kpi-value" id="kpiAvgVaginalDepth">0 cm</h3>
+            <span class="kpi-explanation">Mean recorded internal depth</span>
+        </div>
+    </div>
+
+    <div class="kpi-card anim-stagger">
+        <div class="kpi-icon-wrapper orange-icon">
+            <i class="fa-solid fa-ruler-horizontal"></i>
+        </div>
+        <div class="kpi-content">
+            <span class="kpi-label">Avg Cervix Distance</span>
+            <h3 class="kpi-value" id="kpiAvgCervixDistance">0 cm</h3>
+            <span class="kpi-explanation">Mean distance to cervix across subset</span>
+        </div>
+    </div>
+
+    <div class="kpi-card anim-stagger">
+        <div class="kpi-icon-wrapper red-icon">
+            <i class="fa-solid fa-temperature-half"></i>
+        </div>
+        <div class="kpi-content">
+            <span class="kpi-label">Avg Vaginal Temp</span>
+            <h3 class="kpi-value" id="kpiAvgTemp">0 °C</h3>
+            <span class="kpi-explanation">Mean recorded internal temperature</span>
+        </div>
+    </div>
+</div>
+
+<!-- Primary Visualization Area: Reproductive tract comparison -->
+<div class="chart-row-large">
+    <div class="card chart-card featured-chart">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-chart-bar" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+                Comparison of Reproductive Tract Measurements Among Yaks
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-container-large">
+                <canvas id="reproductiveTractChart"></canvas>
+            </div>
+            <p class="chart-insight-text">
+                <strong>Insight:</strong> This chart compares internal reproductive tract measurements across individual yaks, making anatomical variation easier to identify.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Visualizations Grid -->
+<div class="charts-two-column-grid">
+    <!-- Body Weight Comparison -->
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-weight-scale" style="color: var(--success-color); margin-right: 0.5rem;"></i>
+                Body Weight by Yak
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-container-standard">
+                <canvas id="bodyWeightChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Breeding Method Distribution -->
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-chart-pie" style="color: var(--warning-color); margin-right: 0.5rem;"></i>
+                Breeding Method Distribution
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-container-standard">
+                <canvas id="breedingMethodChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scatter Plots Grid -->
+<div class="charts-two-column-grid">
+    <!-- Weight vs Vaginal Depth -->
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-chart-line" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+                Body Weight vs Vaginal Depth
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-container-standard">
+                <canvas id="weightDepthScatter"></canvas>
+            </div>
+            <p class="chart-insight-text">
+                This chart helps explore whether body weight and recorded vaginal depth show any visible relationship in the current dataset.
+            </p>
+        </div>
+    </div>
+
+    <!-- Weight vs Cervix Distance -->
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-chart-line" style="color: var(--success-color); margin-right: 0.5rem;"></i>
+                Body Weight vs Distance to Cervix
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-container-standard">
+                <canvas id="weightCervixScatter"></canvas>
+            </div>
+            <p class="chart-insight-text">
+                This scatter plot displays weight against distance to cervix, allowing non-technical users to inspect individual animal clusters.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Parity and Temperature Charts Grid -->
+<div class="charts-two-column-grid">
+    <!-- Parity analysis -->
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-baby-carriage" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+                Average Reproductive Measurements by Parity
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-container-standard">
+                <canvas id="parityReproductiveChart"></canvas>
+            </div>
+            <p class="chart-insight-text">
+                Parity represents the number of times an animal has previously given birth.
+            </p>
+        </div>
+    </div>
+
+    <!-- Temperature Analysis -->
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-temperature-half" style="color: var(--danger-color); margin-right: 0.5rem;"></i>
+                Vaginal Temperature by Yak
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-container-standard">
+                <canvas id="temperatureChart"></canvas>
+            </div>
+            <p class="chart-insight-text">
+                Shows recorded temperature. Values out of the normal range (e.g. below 37°C or above 39.2°C) are color-highlighted as outliers.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Weight vs Temp Scatter plot -->
+<div class="chart-row-large">
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-chart-line" style="color: var(--danger-color); margin-right: 0.5rem;"></i>
+                Body Weight vs Vaginal Temperature
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-container-large">
+                <canvas id="weightTempScatter"></canvas>
+            </div>
+            <p class="chart-insight-text">
+                This chart helps users visually explore whether any relationship appears between weight and vaginal temperature.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Individual Animal Profile Section -->
+<div class="chart-row-large" id="profile-section">
+    <div class="card profile-explorer-card">
+        <div class="card-header flex-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-circle-user" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+                Individual Animal Profile
+            </h3>
+            <div class="profile-selector">
+                <select id="yakSelector" class="form-input-field">
+                    <option value="">Select a Yak ID...</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Empty State for profile -->
+            <div id="profileEmptyState" class="empty-profile-state">
+                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                <p>Select a Yak ID from the dropdown list to load their metrics, breeding method, internal measurements, and description.</p>
+            </div>
+            
+            <!-- Profile Details and Chart -->
+            <div id="profileContainer" class="profile-details-grid" style="display: none;">
+                <div class="profile-text-info">
+                    <div class="profile-name-badge-row">
+                        <h4 id="profYakId">Yak ID</h4>
+                        <span id="profNameBadge" class="profile-badge">Name</span>
+                    </div>
+                    
+                    <div class="metadata-grid">
+                        <div class="meta-item">
+                            <span class="meta-label">Date of Birth:</span>
+                            <span class="meta-value" id="profDob">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Dam ID:</span>
+                            <span class="meta-value" id="profDam">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Sire ID:</span>
+                            <span class="meta-value" id="profSire">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Breeding Method:</span>
+                            <span class="meta-value" id="profBreedingMethod">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Parity Count:</span>
+                            <span class="meta-value" id="profParity">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Vulva Length:</span>
+                            <span class="meta-value" id="profVulvaLength">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Vaginal Diameter:</span>
+                            <span class="meta-value" id="profVagDiameter">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Vagina Temperature:</span>
+                            <span class="meta-value" id="profVagTemp">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-description-box">
+                        <span class="meta-label">Description / Field Notes:</span>
+                        <p id="profDescription" class="profile-desc-text">Description goes here...</p>
+                    </div>
+                </div>
+
+                <div class="profile-comparative-charts">
+                    <h4 class="comp-chart-title">Comparison vs Herd Average</h4>
+                    <div class="comparison-bars">
+                        <!-- Weight Comparison Bar -->
+                        <div class="comp-bar-item">
+                            <div class="comp-bar-labels">
+                                <span class="comp-label-name">Body Weight</span>
+                                <span class="comp-label-values"><strong id="profValWeight">-</strong> / <span id="profAvgWeight">-</span></span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill fill-blue" id="profBarWeight" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Vaginal Depth Comparison Bar -->
+                        <div class="comp-bar-item">
+                            <div class="comp-bar-labels">
+                                <span class="comp-label-name">Vaginal Depth</span>
+                                <span class="comp-label-values"><strong id="profValDepth">-</strong> / <span id="profAvgDepth">-</span></span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill fill-purple" id="profBarDepth" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Cervix Distance Comparison Bar -->
+                        <div class="comp-bar-item">
+                            <div class="comp-bar-labels">
+                                <span class="comp-label-name">Distance to Cervix</span>
+                                <span class="comp-label-values"><strong id="profValCervix">-</strong> / <span id="profAvgCervix">-</span></span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill fill-green" id="profBarCervix" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Temp Comparison Bar -->
+                        <div class="comp-bar-item">
+                            <div class="comp-bar-labels">
+                                <span class="comp-label-name">Vaginal Temp</span>
+                                <span class="comp-label-values"><strong id="profValTemp">-</strong> / <span id="profAvgTemp">-</span></span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill fill-red" id="profBarTemp" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* CSS Styles for Analytics dashboard */
+.analytics-header {
+    margin-bottom: 2rem;
+    animation: fade-slide-in 0.4s ease-out forwards;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    transition: var(--transition);
+}
+
+.back-link:hover {
+    color: var(--secondary-color);
+    transform: translateX(-4px);
+}
+
+.header-title-section {
+    margin-top: 0.5rem;
+}
+
+.page-subtitle {
+    margin-top: 0.25rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+/* Filter Card */
+.filter-card {
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    animation: fade-slide-in 0.4s ease-out 0.05s forwards;
+    opacity: 0;
+}
+
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-end;
+}
+
+.filter-group-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-group-item label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.form-input-field {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    transition: var(--transition);
+    width: 100%;
+}
+
+.form-input-field:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.input-icon-wrapper {
+    position: relative;
+}
+
+.input-icon-wrapper i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+.input-icon-wrapper input {
+    padding-left: 38px;
+}
+
+.filter-actions-group {
+    display: flex;
+    align-items: center;
+}
+
+.btn-secondary-outline {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.btn-secondary-outline:hover {
+    background: var(--hover-bg);
+    border-color: var(--text-secondary);
+}
+
+/* Summary Grid */
+.summary-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.kpi-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+}
+
+.blue-icon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.green-icon { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.purple-icon { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.orange-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.red-icon { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+.kpi-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.kpi-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-value {
+    font-size: 1.625rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.125rem 0;
+}
+
+.kpi-explanation {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.2;
+}
+
+/* Charts Elements */
+.chart-row-large {
+    margin-bottom: 2rem;
+    animation: fade-slide-in 0.4s ease-out 0.1s forwards;
+    opacity: 0;
+}
+
+.charts-two-column-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    animation: fade-slide-in 0.4s ease-out 0.15s forwards;
+    opacity: 0;
+}
+
+.chart-card {
+    border-radius: 12px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.chart-card .card-header {
+    padding: 1.25rem 1.5rem;
+    background: var(--table-header-bg);
+}
+
+.chart-card .card-body {
+    padding: 1.5rem;
+}
+
+.chart-container-large {
+    position: relative;
+    height: 380px;
+    width: 100%;
+}
+
+.chart-container-standard {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+.chart-insight-text {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    padding: 0.75rem 1rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+    line-height: 1.4;
+}
+
+/* Profile Explorer Card */
+.profile-explorer-card {
+    border-radius: 12px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.flex-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: var(--table-header-bg);
+    padding: 1.25rem 1.5rem;
+}
+
+.profile-selector {
+    min-width: 250px;
+}
+
+.empty-profile-state {
+    padding: 4rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.empty-profile-state i {
+    font-size: 3.5rem;
+    color: var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.empty-profile-state p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.profile-details-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 2rem;
+    padding: 1.5rem;
+}
+
+.profile-name-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.profile-name-badge-row h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.profile-badge {
+    padding: 0.35rem 0.85rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--accent-color);
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.65rem 0.85rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.meta-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 0.15rem;
+}
+
+.meta-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.profile-description-box {
+    padding: 1rem;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+}
+
+.profile-desc-text {
+    margin-top: 0.35rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.profile-comparative-charts {
+    border-left: 1px solid var(--border-color);
+    padding-left: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.comp-chart-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    color: var(--text-primary);
+}
+
+.comparison-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.comp-bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.comp-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.comp-label-name {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.comp-label-values {
+    color: var(--text-secondary);
+}
+
+.progress-bar-bg {
+    height: 8px;
+    width: 100%;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fill-blue { background: var(--accent-color); }
+.fill-green { background: var(--success-color); }
+.fill-purple { background: #8b5cf6; }
+.fill-red { background: var(--danger-color); }
+
+/* Stagger animations */
+@keyframes fade-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.anim-stagger {
+    opacity: 0;
+    animation: fade-slide-in 0.4s ease-out forwards;
+}
+
+.anim-stagger:nth-child(1) { animation-delay: 0.05s; }
+.anim-stagger:nth-child(2) { animation-delay: 0.1s; }
+.anim-stagger:nth-child(3) { animation-delay: 0.15s; }
+.anim-stagger:nth-child(4) { animation-delay: 0.2s; }
+.anim-stagger:nth-child(5) { animation-delay: 0.25s; }
+
+/* Responsive styles */
+@media (max-width: 1024px) {
+    .charts-two-column-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    .filter-actions-group {
+        justify-content: flex-end;
+    }
+    .profile-details-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .profile-comparative-charts {
+        border-left: none;
+        padding-left: 0;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-delay: 0s !important;
+        animation-duration: 0s !important;
+        transition-duration: 0s !important;
+        transform: none !important;
+    }
+}
+</style>
+
+<!-- Chart.js and Dashboard Controller -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let allData = [];
+    let filteredData = [];
+    
+    // Chart instances references
+    let tractChartInstance = null;
+    let weightChartInstance = null;
+    let breedingChartInstance = null;
+    let weightDepthScatterInstance = null;
+    let weightCervixScatterInstance = null;
+    let parityChartInstance = null;
+    let tempChartInstance = null;
+    let weightTempScatterInstance = null;
+    
+    // Elements references
+    const idSearch = document.getElementById('idSearch');
+    const breedingMethodFilter = document.getElementById('breedingMethodFilter');
+    const parityFilter = document.getElementById('parityFilter');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    const yakSelector = document.getElementById('yakSelector');
+    
+    const kpiTotalAnimals = document.getElementById('kpiTotalAnimals');
+    const kpiAvgWeight = document.getElementById('kpiAvgWeight');
+    const kpiAvgVaginalDepth = document.getElementById('kpiAvgVaginalDepth');
+    const kpiAvgCervixDistance = document.getElementById('kpiAvgCervixDistance');
+    const kpiAvgTemp = document.getElementById('kpiAvgTemp');
+    
+    const profileEmptyState = document.getElementById('profileEmptyState');
+    const profileContainer = document.getElementById('profileContainer');
+    
+    // Fetch analytics JSON data
+    fetch("{% url 'animals:analytics_data' %}")
+        .then(response => response.json())
+        .then(res => {
+            if (res.status === 'success') {
+                allData = res.data;
+                filteredData = [...allData];
+                
+                // Populate dropdown profiles lists
+                populateSelectors(allData);
+                
+                // Render everything initial
+                updateDashboard();
+            } else {
+                console.error("Failed to fetch analytics data");
+            }
+        })
+        .catch(err => {
+            console.error("Error loading analytics data: ", err);
+        });
+
+    function populateSelectors(data) {
+        // Clear except first
+        yakSelector.innerHTML = '<option value="">Select a Yak ID...</option>';
+        data.forEach(yak => {
+            const option = document.createElement('option');
+            option.value = yak.yak_id;
+            option.textContent = `${yak.yak_id} (${yak.name})`;
+            yakSelector.appendChild(option);
+        });
+    }
+
+    // Filters event listeners
+    idSearch.addEventListener('input', applyFilters);
+    breedingMethodFilter.addEventListener('change', applyFilters);
+    parityFilter.addEventListener('change', applyFilters);
+    
+    resetFiltersBtn.addEventListener('click', function() {
+        idSearch.value = "";
+        breedingMethodFilter.value = "";
+        parityFilter.value = "";
+        applyFilters();
+    });
+
+    function applyFilters() {
+        const searchQuery = idSearch.value.trim().toLowerCase();
+        const breedMethod = breedingMethodFilter.value;
+        const parity = parityFilter.value;
+        
+        filteredData = allData.filter(yak => {
+            const matchesSearch = yak.yak_id.toLowerCase().includes(searchQuery) || 
+                                 yak.name.toLowerCase().includes(searchQuery);
+            const matchesMethod = !breedMethod || yak.breeding_method === breedMethod;
+            const matchesParity = !parity || String(yak.parity) === parity;
+            
+            return matchesSearch && matchesMethod && matchesParity;
+        });
+        
+        updateDashboard();
+    }
+
+    function updateDashboard() {
+        calculateKPIs();
+        renderCharts();
+    }
+
+    // Count up animation helper
+    function animateValue(obj, start, end, duration, decimals = 0, suffix = "") {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || duration === 0) {
+            obj.innerHTML = end.toFixed(decimals) + suffix;
+            return;
+        }
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const easedProgress = progress * (2 - progress); // Easing out quad
+            const current = easedProgress * (end - start) + start;
+            obj.innerHTML = current.toFixed(decimals) + suffix;
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                obj.innerHTML = end.toFixed(decimals) + suffix;
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    function calculateKPIs() {
+        const count = filteredData.length;
+        
+        let totalWeight = 0, weightCount = 0;
+        let totalDepth = 0, depthCount = 0;
+        let totalCervix = 0, cervixCount = 0;
+        let totalTemp = 0, tempCount = 0;
+        
+        filteredData.forEach(yak => {
+            if (yak.body_weight !== null) { totalWeight += yak.body_weight; weightCount++; }
+            if (yak.vaginal_depth !== null) { totalDepth += yak.vaginal_depth; depthCount++; }
+            if (yak.distance_to_cervix !== null) { totalCervix += yak.distance_to_cervix; cervixCount++; }
+            if (yak.vagina_temperature !== null) { totalTemp += yak.vagina_temperature; tempCount++; }
+        });
+        
+        const avgWeight = weightCount > 0 ? (totalWeight / weightCount) : 0;
+        const avgDepth = depthCount > 0 ? (totalDepth / depthCount) : 0;
+        const avgCervix = cervixCount > 0 ? (totalCervix / cervixCount) : 0;
+        const avgTemp = tempCount > 0 ? (totalTemp / tempCount) : 0;
+        
+        // Target animations
+        animateValue(kpiTotalAnimals, 0, count, 600, 0, "");
+        animateValue(kpiAvgWeight, 0, avgWeight, 600, 1, " kg");
+        animateValue(kpiAvgVaginalDepth, 0, avgDepth, 600, 2, " cm");
+        animateValue(kpiAvgCervixDistance, 0, avgCervix, 600, 2, " cm");
+        animateValue(kpiAvgTemp, 0, avgTemp, 600, 2, " °C");
+    }
+
+    // Chart.js global options mapping for themes
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDarkMode ? '#94A3B8' : '#64748B';
+    const gridColor = isDarkMode ? '#334155' : '#E2E8F0';
+    
+    Chart.defaults.color = textColor;
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 8;
+
+    function renderCharts() {
+        // Destroy existing
+        if (tractChartInstance) tractChartInstance.destroy();
+        if (weightChartInstance) weightChartInstance.destroy();
+        if (breedingChartInstance) breedingChartInstance.destroy();
+        if (weightDepthScatterInstance) weightDepthScatterInstance.destroy();
+        if (weightCervixScatterInstance) weightCervixScatterInstance.destroy();
+        if (parityChartInstance) parityChartInstance.destroy();
+        if (tempChartInstance) tempChartInstance.destroy();
+        if (weightTempScatterInstance) weightTempScatterInstance.destroy();
+
+        if (filteredData.length === 0) return;
+
+        const labels = filteredData.map(y => y.yak_id);
+        const tractCtx = document.getElementById('reproductiveTractChart').getContext('2d');
+        const weightCtx = document.getElementById('bodyWeightChart').getContext('2d');
+        const breedingCtx = document.getElementById('breedingMethodChart').getContext('2d');
+        const depthScatterCtx = document.getElementById('weightDepthScatter').getContext('2d');
+        const cervixScatterCtx = document.getElementById('weightCervixScatter').getContext('2d');
+        const parityCtx = document.getElementById('parityReproductiveChart').getContext('2d');
+        const tempCtx = document.getElementById('temperatureChart').getContext('2d');
+        const tempScatterCtx = document.getElementById('weightTempScatter').getContext('2d');
+
+        // 1. Reproductive tract measurements comparison
+        tractChartInstance = new Chart(tractCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Vaginal Depth (cm)',
+                        data: filteredData.map(y => y.vaginal_depth),
+                        backgroundColor: 'rgba(139, 92, 246, 0.85)',
+                        borderColor: '#8b5cf6',
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Distance to Cervix (cm)',
+                        data: filteredData.map(y => y.distance_to_cervix),
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderColor: '#10b981',
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Measurement (cm)' }
+                    }
+                }
+            }
+        });
+
+        // 2. Weight by Yak
+        weightChartInstance = new Chart(weightCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Body Weight (kg)',
+                    data: filteredData.map(y => y.body_weight),
+                    backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Weight (kg)' }
+                    }
+                }
+            }
+        });
+
+        // 3. Breeding Method Distribution
+        const naturalCount = filteredData.filter(y => y.breeding_method === 'Natural').length;
+        const aiCount = filteredData.filter(y => y.breeding_method === 'Artificial Insemination').length;
+        breedingChartInstance = new Chart(breedingCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Natural Mating', 'Artificial Insemination'],
+                datasets: [{
+                    data: [naturalCount, aiCount],
+                    backgroundColor: [
+                        'rgba(245, 158, 11, 0.85)',
+                        'rgba(59, 130, 246, 0.85)'
+                    ],
+                    borderColor: [
+                        '#f59e0b',
+                        '#3b82f6'
+                    ],
+                    borderWidth: 1.5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // 4. Scatter Body Weight vs Vaginal Depth
+        const scatterDepthData = filteredData
+            .filter(y => y.body_weight !== null && y.vaginal_depth !== null)
+            .map(y => ({
+                x: y.body_weight,
+                y: y.vaginal_depth,
+                yak_id: y.yak_id,
+                name: y.name
+            }));
+
+        weightDepthScatterInstance = new Chart(depthScatterCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Yaks',
+                    data: scatterDepthData,
+                    backgroundColor: 'rgba(139, 92, 246, 0.85)',
+                    borderColor: '#8b5cf6',
+                    borderWidth: 1,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const raw = ctx.raw;
+                                return `${raw.yak_id} (${raw.name}): Weight ${raw.x} kg, Depth ${raw.y} cm`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Body Weight (kg)' }
+                    },
+                    y: {
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Vaginal Depth (cm)' }
+                    }
+                }
+            }
+        });
+
+        // 5. Scatter Weight vs Cervix Distance
+        const scatterCervixData = filteredData
+            .filter(y => y.body_weight !== null && y.distance_to_cervix !== null)
+            .map(y => ({
+                x: y.body_weight,
+                y: y.distance_to_cervix,
+                yak_id: y.yak_id,
+                name: y.name
+            }));
+
+        weightCervixScatterInstance = new Chart(cervixScatterCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Yaks',
+                    data: scatterCervixData,
+                    backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                    borderColor: '#10b981',
+                    borderWidth: 1,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const raw = ctx.raw;
+                                return `${raw.yak_id} (${raw.name}): Weight ${raw.x} kg, Distance ${raw.y} cm`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Body Weight (kg)' }
+                    },
+                    y: {
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Distance to Cervix (cm)' }
+                    }
+                }
+            }
+        });
+
+        // 6. Average Reproductive Measurements by Parity
+        // Group by parity
+        const parityGroups = {};
+        filteredData.forEach(y => {
+            if (y.parity === null) return;
+            if (!parityGroups[y.parity]) {
+                parityGroups[y.parity] = { depthSum: 0, depthCount: 0, cervixSum: 0, cervixCount: 0 };
+            }
+            if (y.vaginal_depth !== null) {
+                parityGroups[y.parity].depthSum += y.vaginal_depth;
+                parityGroups[y.parity].depthCount++;
+            }
+            if (y.distance_to_cervix !== null) {
+                parityGroups[y.parity].cervixSum += y.distance_to_cervix;
+                parityGroups[y.parity].cervixCount++;
+            }
+        });
+
+        const parityLabels = Object.keys(parityGroups).sort((a, b) => Number(a) - Number(b));
+        const avgDepthByParity = parityLabels.map(p => parityGroups[p].depthCount > 0 ? (parityGroups[p].depthSum / parityGroups[p].depthCount) : 0);
+        const avgCervixByParity = parityLabels.map(p => parityGroups[p].cervixCount > 0 ? (parityGroups[p].cervixSum / parityGroups[p].cervixCount) : 0);
+
+        parityChartInstance = new Chart(parityCtx, {
+            type: 'bar',
+            data: {
+                labels: parityLabels.map(p => `Parity ${p}`),
+                datasets: [
+                    {
+                        label: 'Avg Vaginal Depth (cm)',
+                        data: avgDepthByParity,
+                        backgroundColor: 'rgba(139, 92, 246, 0.85)',
+                        borderColor: '#8b5cf6',
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Avg Distance to Cervix (cm)',
+                        data: avgCervixByParity,
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderColor: '#10b981',
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Measurement (cm)' }
+                    }
+                }
+            }
+        });
+
+        // 7. Vaginal Temp by Yak (highlight outliers)
+        // Normal range: 37°C to 39.2°C
+        const tempColors = filteredData.map(y => {
+            const t = y.vagina_temperature;
+            if (t === null) return 'rgba(59, 130, 246, 0.85)';
+            if (t < 37.0 || t > 39.2) {
+                return 'rgba(239, 68, 68, 0.85)'; // Red outlier
+            }
+            return 'rgba(59, 130, 246, 0.85)'; // Blue normal
+        });
+        
+        const tempBorderColors = filteredData.map(y => {
+            const t = y.vagina_temperature;
+            if (t === null) return '#3b82f6';
+            if (t < 37.0 || t > 39.2) return '#ef4444';
+            return '#3b82f6';
+        });
+
+        tempChartInstance = new Chart(tempCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Vaginal Temperature (°C)',
+                    data: filteredData.map(y => y.vagina_temperature),
+                    backgroundColor: tempColors,
+                    borderColor: tempBorderColors,
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        min: 30, // Show variation clearly
+                        max: 42,
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Temperature (°C)' }
+                    }
+                }
+            }
+        });
+
+        // 8. Body Weight vs Vaginal Temperature Scatter Plot
+        const scatterTempData = filteredData
+            .filter(y => y.body_weight !== null && y.vagina_temperature !== null)
+            .map(y => ({
+                x: y.body_weight,
+                y: y.vagina_temperature,
+                yak_id: y.yak_id,
+                name: y.name
+            }));
+
+        weightTempScatterInstance = new Chart(tempScatterCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Yaks',
+                    data: scatterTempData,
+                    backgroundColor: 'rgba(239, 68, 68, 0.85)',
+                    borderColor: '#ef4444',
+                    borderWidth: 1,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const raw = ctx.raw;
+                                return `${raw.yak_id} (${raw.name}): Weight ${raw.x} kg, Temp ${raw.y} °C`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Body Weight (kg)' }
+                    },
+                    y: {
+                        min: 30,
+                        max: 42,
+                        grid: { color: gridColor },
+                        title: { display: true, text: 'Vaginal Temperature (°C)' }
+                    }
+                }
+            }
+        });
+    }
+
+    // Individual profile selection handling
+    yakSelector.addEventListener('change', function() {
+        const yakId = this.value;
+        if (!yakId) {
+            profileEmptyState.style.display = 'flex';
+            profileContainer.style.display = 'none';
+            return;
+        }
+
+        const yak = allData.find(y => y.yak_id === yakId);
+        if (!yak) return;
+
+        profileEmptyState.style.display = 'none';
+        profileContainer.style.display = 'grid';
+
+        // Render profile fields
+        document.getElementById('profYakId').textContent = yak.yak_id;
+        document.getElementById('profNameBadge').textContent = yak.name || 'Not Recorded';
+        document.getElementById('profDob').textContent = formatDate(yak.date_of_birth);
+        document.getElementById('profDam').textContent = yak.dam || 'Not Recorded';
+        document.getElementById('profSire').textContent = yak.sire || 'Not Recorded';
+        document.getElementById('profBreedingMethod').textContent = yak.breeding_method || 'Not Recorded';
+        document.getElementById('profParity').textContent = yak.parity !== null ? yak.parity : 'Not Recorded';
+        document.getElementById('profVulvaLength').textContent = yak.vulva_length !== null ? `${yak.vulva_length} cm` : 'Not Recorded';
+        document.getElementById('profVagDiameter').textContent = yak.vaginal_diameter !== null ? `${yak.vaginal_diameter} cm` : 'Not Recorded';
+        document.getElementById('profVagTemp').textContent = yak.vagina_temperature !== null ? `${yak.vagina_temperature} °C` : 'Not Recorded';
+        document.getElementById('profDescription').textContent = yak.description || 'Not Recorded';
+
+        // Calculate average values from all yaks
+        let totalWeight = 0, weightCount = 0;
+        let totalDepth = 0, depthCount = 0;
+        let totalCervix = 0, cervixCount = 0;
+        let totalTemp = 0, tempCount = 0;
+
+        allData.forEach(y => {
+            if (y.body_weight !== null) { totalWeight += y.body_weight; weightCount++; }
+            if (y.vaginal_depth !== null) { totalDepth += y.vaginal_depth; depthCount++; }
+            if (y.distance_to_cervix !== null) { totalCervix += y.distance_to_cervix; cervixCount++; }
+            if (y.vagina_temperature !== null) { totalTemp += y.vagina_temperature; tempCount++; }
+        });
+
+        const herdAvgWeight = totalWeight / weightCount;
+        const herdAvgDepth = totalDepth / depthCount;
+        const herdAvgCervix = totalCervix / cervixCount;
+        const herdAvgTemp = totalTemp / tempCount;
+
+        // Display labels
+        document.getElementById('profValWeight').textContent = yak.body_weight !== null ? `${yak.body_weight} kg` : 'Not Recorded';
+        document.getElementById('profAvgWeight').textContent = `Herd Avg: ${herdAvgWeight.toFixed(1)} kg`;
+
+        document.getElementById('profValDepth').textContent = yak.vaginal_depth !== null ? `${yak.vaginal_depth} cm` : 'Not Recorded';
+        document.getElementById('profAvgDepth').textContent = `Herd Avg: ${herdAvgDepth.toFixed(2)} cm`;
+
+        document.getElementById('profValCervix').textContent = yak.distance_to_cervix !== null ? `${yak.distance_to_cervix} cm` : 'Not Recorded';
+        document.getElementById('profAvgCervix').textContent = `Herd Avg: ${herdAvgCervix.toFixed(2)} cm`;
+
+        document.getElementById('profValTemp').textContent = yak.vagina_temperature !== null ? `${yak.vagina_temperature} °C` : 'Not Recorded';
+        document.getElementById('profAvgTemp').textContent = `Herd Avg: ${herdAvgTemp.toFixed(2)} °C`;
+
+        // Calculate bar percentages (capped at 100%)
+        const maxWeightForScale = 400; // Reference Max scale
+        const maxReproForScale = 30; // Reference Max scale for tract depth/cervix
+        const maxTempForScale = 45; // Reference Max scale for temp
+
+        const weightPercent = yak.body_weight !== null ? Math.min((yak.body_weight / maxWeightForScale) * 100, 100) : 0;
+        const depthPercent = yak.vaginal_depth !== null ? Math.min((yak.vaginal_depth / maxReproForScale) * 100, 100) : 0;
+        const cervixPercent = yak.distance_to_cervix !== null ? Math.min((yak.distance_to_cervix / maxReproForScale) * 100, 100) : 0;
+        const tempPercent = yak.vagina_temperature !== null ? Math.min((yak.vagina_temperature / maxTempForScale) * 100, 100) : 0;
+
+        // Apply widths
+        setTimeout(() => {
+            document.getElementById('profBarWeight').style.width = `${weightPercent}%`;
+            document.getElementById('profBarDepth').style.width = `${depthPercent}%`;
+            document.getElementById('profBarCervix').style.width = `${cervixPercent}%`;
+            document.getElementById('profBarTemp').style.width = `${tempPercent}%`;
+        }, 100);
+    });
+
+    function formatDate(dateString) {
+        if (!dateString) return 'Not Recorded';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        } catch(e) {
+            return dateString;
+        }
+    }
+});
+</script>
+{% endblock %}

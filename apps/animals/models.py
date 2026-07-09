@@ -40,6 +40,20 @@ class Animal(models.Model):
     weight = models.DecimalField(max_digits=6, decimal_places=2)
     health_status = models.CharField(max_length=50, choices=HEALTH_STATUS_CHOICES, default='healthy')
     reproductive_status = models.CharField(max_length=50, choices=REPRODUCTIVE_STATUS_CHOICES)
+    
+    # New Yak fields
+    date_of_birth = models.DateField(null=True, blank=True)
+    dam = models.CharField(max_length=50, null=True, blank=True)
+    sire = models.CharField(max_length=50, null=True, blank=True)
+    breeding_method = models.CharField(max_length=50, null=True, blank=True)
+    vulva_length = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    vaginal_depth = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    distance_to_cervix = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    vaginal_diameter = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    parity = models.IntegerField(null=True, blank=True)
+    vagina_temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+
     registration_date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -53,3 +67,15 @@ class Animal(models.Model):
     
     def __str__(self):
         return f"{self.animal_id} - {self.name}"
+
+    def save(self, *args, **kwargs):
+        if self.date_of_birth:
+            from datetime import date
+            today = date.today()
+            self.age = today.year - self.date_of_birth.year - (
+                (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
+            )
+        else:
+            if not self.age:
+                self.age = 0
+        super().save(*args, **kwargs)

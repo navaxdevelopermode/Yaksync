@@ -7,12 +7,17 @@ class AnimalForm(forms.ModelForm):
     
     class Meta:
         model = Animal
-        fields = ['animal_id', 'name', 'species', 'breed', 'age', 'gender', 
-                  'weight', 'health_status', 'reproductive_status']
+        fields = [
+            'animal_id', 'name', 'species', 'breed', 'date_of_birth', 'gender', 
+            'weight', 'health_status', 'reproductive_status', 'dam', 'sire', 
+            'breeding_method', 'vulva_length', 'vaginal_depth', 
+            'distance_to_cervix', 'vaginal_diameter', 'parity', 'vagina_temperature', 
+            'description'
+        ]
         widgets = {
             'animal_id': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'e.g., YAK001',
+                'placeholder': 'e.g., YAK697',
                 'required': True,
             }),
             'name': forms.TextInput(attrs={
@@ -22,7 +27,7 @@ class AnimalForm(forms.ModelForm):
             }),
             'species': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'e.g., Yak, Cattle, Sheep',
+                'placeholder': 'e.g., Yak, Cattle',
                 'required': True,
             }),
             'breed': forms.TextInput(attrs={
@@ -30,11 +35,10 @@ class AnimalForm(forms.ModelForm):
                 'placeholder': 'e.g., Highland Yak',
                 'required': True,
             }),
-            'age': forms.NumberInput(attrs={
+            'date_of_birth': forms.DateInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Age in years',
+                'type': 'date',
                 'required': True,
-                'min': '0',
             }),
             'weight': forms.NumberInput(attrs={
                 'class': 'form-input',
@@ -51,23 +55,87 @@ class AnimalForm(forms.ModelForm):
                 'class': 'form-input',
                 'required': True,
             }),
+            'dam': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Dam ID',
+            }),
+            'sire': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Sire ID',
+            }),
+            'breeding_method': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'e.g., Natural, Artificial Insemination',
+            }),
+            'vulva_length': forms.NumberInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Vulva Length in cm',
+                'step': '0.01',
+                'min': '0',
+            }),
+            'vaginal_depth': forms.NumberInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Vaginal Depth in cm',
+                'step': '0.01',
+                'min': '0',
+            }),
+            'distance_to_cervix': forms.NumberInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Distance to Cervix in cm',
+                'step': '0.01',
+                'min': '0',
+            }),
+            'vaginal_diameter': forms.NumberInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Vaginal Diameter in cm',
+                'step': '0.01',
+                'min': '0',
+            }),
+            'parity': forms.NumberInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Parity count',
+                'min': '0',
+            }),
+            'vagina_temperature': forms.NumberInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Vaginal Temperature in °C',
+                'step': '0.01',
+                'min': '0',
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-input',
+                'placeholder': 'Physical markings, color pattern, horn status, etc.',
+                'rows': 3,
+            }),
         }
         labels = {
             'animal_id': 'Animal ID',
             'name': 'Name',
             'species': 'Species',
             'breed': 'Breed',
-            'age': 'Age (years)',
+            'date_of_birth': 'Date of Birth',
             'gender': 'Gender',
             'weight': 'Weight (kg)',
             'health_status': 'Health Status',
             'reproductive_status': 'Reproductive Status',
+            'dam': 'Dam ID',
+            'sire': 'Sire ID',
+            'breeding_method': 'Breeding Method',
+            'vulva_length': 'Vulva Length (cm)',
+            'vaginal_depth': 'Vaginal Depth (cm)',
+            'distance_to_cervix': 'Distance to Cervix (cm)',
+            'vaginal_diameter': 'Vaginal Diameter (cm)',
+            'parity': 'Parity count',
+            'vagina_temperature': 'Vaginal Temperature (°C)',
+            'description': 'Physical Description',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['gender'].initial = 'female'
         self.fields['gender'].widget = forms.HiddenInput(attrs={'value': 'female'})
+        self.fields['species'].initial = 'Yak'
+        self.fields['breed'].initial = 'Yak'
     
     def clean_animal_id(self):
         animal_id = self.cleaned_data.get('animal_id')
@@ -79,13 +147,19 @@ class AnimalForm(forms.ModelForm):
             raise forms.ValidationError('This Animal ID already exists.')
         return animal_id
     
-    def clean_age(self):
-        age = self.cleaned_data.get('age')
-        if age is not None and age < 0:
-            raise forms.ValidationError('Age cannot be negative.')
-        if age is not None and age > 30:
-            raise forms.ValidationError('Age seems unusually high. Please verify.')
-        return age
+    def clean_date_of_birth(self):
+        date_of_birth = self.cleaned_data.get('date_of_birth')
+        if date_of_birth:
+            from datetime import date
+            today = date.today()
+            if date_of_birth > today:
+                raise forms.ValidationError('Date of birth cannot be in the future.')
+            age = today.year - date_of_birth.year - (
+                (today.month, today.day) < (date_of_birth.month, date_of_birth.day)
+            )
+            if age > 30:
+                raise forms.ValidationError('Age based on DOB seems unusually high. Please verify.')
+        return date_of_birth
     
     def clean_weight(self):
         weight = self.cleaned_data.get('weight')
