@@ -161,8 +161,8 @@ h4 {
 
 .sidebar {
     width: var(--sidebar-width);
-    background: var(--primary-color);
-    color: white;
+    background: linear-gradient(180deg, #064E3B 0%, #022C22 100%);
+    color: #ffffff;
     position: fixed;
     top: 0;
     left: 0;
@@ -334,7 +334,7 @@ h4 {
     display: flex;
     align-items: center;
     padding: 0.75rem 1.25rem;
-    color: rgba(255, 255, 255, 0.65);
+    color: #F1F5F9;
     text-decoration: none;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     gap: 1rem;
@@ -345,25 +345,27 @@ h4 {
 }
 
 .menu-link:hover {
-    background: rgba(255, 255, 255, 0.04);
-    color: white;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    transform: translateX(3px);
 }
 
 .menu-link.active {
-    background: rgba(59, 130, 246, 0.08) !important;
-    color: var(--accent-color) !important;
+    background: #059669 !important;
+    color: #ffffff !important;
     font-weight: 600;
     border-left: none !important;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 .menu-link.active::before {
     content: '';
     position: absolute;
     left: 0;
-    top: 25%;
-    height: 50%;
+    top: 20%;
+    height: 60%;
     width: 3.5px;
-    background: var(--accent-color);
+    background: #ffffff;
     border-radius: 0 4px 4px 0;
 }
 
@@ -374,16 +376,22 @@ h4 {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.45);
+    color: #A7F3D0;
     transition: all 0.25s ease;
 }
 
 .menu-link.active .menu-icon {
-    color: var(--accent-color) !important;
+    color: #ffffff !important;
 }
 
 .menu-link:hover .menu-icon {
-    color: white;
+    color: #ffffff !important;
+}
+
+.menu-link.active:hover {
+    background: #047857 !important;
+    transform: none;
+    box-shadow: 0 4px 12px rgba(4, 120, 87, 0.35);
 }
 
 .menu-icon i {
