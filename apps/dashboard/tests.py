@@ -3,11 +3,14 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from unittest.mock import patch
 from apps.alerts.models import Alert
+from apps.authentication.models import UserProfile
 
 class DashboardTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='password123')
+        # Create a default profile to avoid issues
+        UserProfile.objects.create(user=self.user, role='administrator')
         self.dashboard_url = reverse('dashboard:index')
 
     def test_dashboard_requires_login(self):
@@ -151,11 +154,52 @@ class DashboardUpdatesAPITests(TestCase):
         self.assertEqual(stats['total_animals'], 0)
         self.assertEqual(stats['total_devices'], 0)
         
-        # Verify HTML fragments keys
+        # Verify HTML fragments keys (dashboard_activities is removed)
         html = data['html']
         self.assertIn('navbar_alerts', html)
         self.assertIn('dashboard_alerts', html)
-        self.assertIn('dashboard_activities', html)
+        self.assertNotIn('dashboard_activities', html)
         self.assertIn('dashboard_hormones', html)
+
+
+class RecentActivityAPITests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.admin_user = User.objects.create_user(username='admin_api', password='password123')
+        self.vet_user = User.objects.create_user(username='vet_api', password='password123')
+        self.operator_user = User.objects.create_user(username='operator_api', password='password123')
+        
+        UserProfile.objects.create(user=self.admin_user, role='administrator')
+        UserProfile.objects.create(user=self.vet_user, role='veterinarian')
+        UserProfile.objects.create(user=self.operator_user, role='farm_operator')
+        
+        self.api_url = reverse('dashboard:recent_activity_api')
+
+    def test_unauthenticated_request_redirects(self):
+        """Test that unauthenticated requests redirect to login"""
+        response = self.client.get(self.api_url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_admin_request_succeeds(self):
+        """Test that Administrator user can successfully fetch recent activity HTML"""
+        self.client.login(username='admin_api', password='password123')
+        response = self.client.get(self.api_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['content-type'], 'application/json')
+        data = response.json()
+        self.assertIn('html', data)
+        self.assertIn('dashboard_activities', data['html'])
+
+    def test_veterinarian_request_forbidden(self):
+        """Test that Veterinarian user gets 403 Forbidden"""
+        self.client.login(username='vet_api', password='password123')
+        response = self.client.get(self.api_url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_farm_operator_request_forbidden(self):
+        """Test that Farm Operator user gets 403 Forbidden"""
+        self.client.login(username='operator_api', password='password123')
+        response = self.client.get(self.api_url)
+        self.assertEqual(response.status_code, 403)
 
 

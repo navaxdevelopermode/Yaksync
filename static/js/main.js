@@ -166,6 +166,23 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error fetching dashboard updates:', error);
             });
+
+        const elRecentActivities = document.getElementById('dashboardRecentActivities');
+        if (elRecentActivities) {
+            fetch('/dashboard/api/recent-activity/')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.html && data.html.dashboard_activities) {
+                        elRecentActivities.innerHTML = data.html.dashboard_activities;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching recent activity updates:', error);
+                });
+        }
     }
 
     function updateNavbarAlerts(data) {

@@ -270,6 +270,7 @@
     </div>
 </div>
 
+{% if is_admin %}
 <div class="dashboard-row">
 
     <div class="dashboard-col-8">
@@ -342,6 +343,54 @@
     </div>
 
 </div>
+{% else %}
+<div class="dashboard-row" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+
+    <!-- Quick Actions Panel Card -->
+    <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+            <h3 class="card-title" style="font-size: 1.15rem; font-weight: 600;"><i class="fa-solid fa-bolt" style="margin-right: 0.5rem; color: var(--accent-color);"></i>Quick Actions</h3>
+        </div>
+        <div class="card-body">
+            <div class="quick-actions-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                <a href="{% url 'animals:create' %}" class="btn-quick-action">
+                    <i class="fa-solid fa-cow" style="font-size: 1.25rem; color: var(--secondary-color);"></i>
+                    <span>Add Animal</span>
+                </a>
+                <a href="{% url 'devices:create' %}" class="btn-quick-action">
+                    <i class="fa-solid fa-microchip" style="font-size: 1.25rem; color: var(--secondary-color);"></i>
+                    <span>Register Device</span>
+                </a>
+                <a href="{% url 'protocols:create' %}" class="btn-quick-action">
+                    <i class="fa-solid fa-clipboard-list" style="font-size: 1.25rem; color: var(--secondary-color);"></i>
+                    <span>Create Protocol</span>
+                </a>
+                <a href="{% url 'reports:dashboard' %}" class="btn-quick-action">
+                    <i class="fa-solid fa-file-invoice" style="font-size: 1.25rem; color: var(--secondary-color);"></i>
+                    <span>Generate Report</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hormone Status Card -->
+    <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column;">
+
+        <div class="card-header" style="margin-bottom: 0.75rem; padding-bottom: 0.75rem;">
+            <h3 class="card-title" style="font-size: 1.15rem; font-weight: 600;">
+                Hormone Status
+            </h3>
+        </div>
+
+
+        <div class="card-body" id="dashboardHormonesList" style="flex: 1;">
+            {% include 'dashboard/includes/hormones_status_fragment.html' %}
+        </div>
+
+    </div>
+
+</div>
+{% endif %}
 
 {% endblock %}
 

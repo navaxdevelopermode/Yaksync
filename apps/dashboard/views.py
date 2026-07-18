@@ -24,6 +24,12 @@ class DashboardView(LoginRequiredMixin, View):
         # Fetch weather data for Dirang
         weather = get_weather_data()
 
+        # Check if user is administrator
+        is_admin = request.user.is_superuser or (
+            hasattr(request.user, 'profile') and request.user.profile.role == 'administrator'
+        )
+        recent_activities = ActivityLog.objects.select_related('user').order_by('-timestamp')[:10] if is_admin else None
+
         # Aggregate statistics from database
         context = {
             'total_animals': Animal.objects.count(),
@@ -35,7 +41,8 @@ class DashboardView(LoginRequiredMixin, View):
             'active_alerts': Alert.objects.filter(status='active').count(),
             'hormone_reservoirs': HormoneReservoir.objects.all()[:5],
             'recent_alerts': Alert.objects.filter(status='active').order_by('-timestamp')[:5],
-            'recent_activities': ActivityLog.objects.select_related('user').order_by('-timestamp')[:10],
+            'recent_activities': recent_activities,
+            'is_admin': is_admin,
             'last_sync': last_sync,
             'weather': weather,
             'animals': Animal.objects.all().order_by('animal_id'),
@@ -64,19 +71,16 @@ class DashboardUpdatesAPIView(LoginRequiredMixin, View):
 
         # Datasets for pre-rendering
         recent_alerts = Alert.objects.filter(status='active').order_by('-timestamp')[:5]
-        recent_activities = ActivityLog.objects.select_related('user').order_by('-timestamp')[:10]
         hormone_reservoirs = HormoneReservoir.objects.all()[:5]
 
         # Context for templates
         navbar_context = {'recent_active_alerts': recent_alerts}
         alerts_context = {'recent_alerts': recent_alerts}
-        activities_context = {'recent_activities': recent_activities}
         hormones_context = {'hormone_reservoirs': hormone_reservoirs}
 
         # Pre-render template fragments
         navbar_alerts_html = render_to_string('includes/navbar_alerts_fragment.html', navbar_context, request=request)
         dashboard_alerts_html = render_to_string('dashboard/includes/recent_alerts_fragment.html', alerts_context, request=request)
-        dashboard_activities_html = render_to_string('dashboard/includes/recent_activities_fragment.html', activities_context, request=request)
         dashboard_hormones_html = render_to_string('dashboard/includes/hormones_status_fragment.html', hormones_context, request=request)
 
         data = {
@@ -93,10 +97,28 @@ class DashboardUpdatesAPIView(LoginRequiredMixin, View):
             'html': {
                 'navbar_alerts': navbar_alerts_html,
                 'dashboard_alerts': dashboard_alerts_html,
-                'dashboard_activities': dashboard_activities_html,
                 'dashboard_hormones': dashboard_hormones_html,
             }
         }
         return JsonResponse(data)
+
+
+class RecentActivityAPIView(LoginRequiredMixin, View):
+    """API endpoint to get dynamic updates for the Recent Activity widget (Admin only)"""
+    login_url = '/auth/login/'
+
+    def get(self, request):
+        if not (request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.role == 'administrator')):
+            return JsonResponse({'error': 'Forbidden'}, status=403)
+
+        recent_activities = ActivityLog.objects.select_related('user').order_by('-timestamp')[:10]
+        activities_context = {'recent_activities': recent_activities}
+        dashboard_activities_html = render_to_string('dashboard/includes/recent_activities_fragment.html', activities_context, request=request)
+
+        return JsonResponse({
+            'html': {
+                'dashboard_activities': dashboard_activities_html
+            }
+        })
 
 
