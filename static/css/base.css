@@ -28,7 +28,7 @@
     --card-bg: #ffffff;
 
     /* Hero / Dashboard Welcome Banner */
-    --hero-bg-image: url('/static/images/himalayan_hero.svg');
+    --hero-bg-image: url('../images/YakBackgroundV2.jpg');
     --hero-overlay: rgba(10, 25, 50, 0.50);
     --hero-text: #ffffff;
     --hero-subtext: rgba(180, 210, 245, 0.90);
