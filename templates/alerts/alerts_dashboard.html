@@ -451,7 +451,14 @@
 
                                 {% if alert.sensor_reading %}
                                     <div class="trigger-reading">
-                                        <i class="fa-solid fa-wave-square" style="margin-right: 0.25rem;"></i> Trigger Reading: <span class="trigger-reading-val">{{ alert.sensor_reading.value }} {{ alert.sensor_reading.unit }}</span>
+                                        <i class="fa-solid fa-wave-square" style="margin-right: 0.25rem;"></i> Trigger Reading: 
+                                        <span class="trigger-reading-val">
+                                            {% if alert.alert_type == 'temperature' %}
+                                                {{ alert.sensor_reading.temperature|floatformat:1 }} °C
+                                            {% else %}
+                                                {{ alert.sensor_reading.movement|floatformat:0 }} steps
+                                            {% endif %}
+                                        </span>
                                         <span style="color: var(--text-secondary)">at {{ alert.sensor_reading.timestamp|date:"g:i A" }}</span>
                                     </div>
                                 {% endif %}

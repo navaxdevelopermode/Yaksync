@@ -13,6 +13,62 @@
     </div>
 </div>
 
+<h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+    <i class="fa-solid fa-tower-broadcast" style="color: var(--secondary-color);"></i> Active IoT Telemetry
+</h3>
+<div class="telemetry-grid">
+    <a href="{% url 'monitoring:yak_detail' yak_834.animal_id %}" class="telemetry-card-link">
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <div class="telemetry-title">
+                    <span class="telemetry-id">{{ yak_834.animal_id }}</span>
+                    <span class="telemetry-name">{% if yak_834.name and yak_834.name != 'Not specified' %}{{ yak_834.name }}{% else %}Female Yak{% endif %}</span>
+                </div>
+                <span class="health-indicator-badge health-{{ yak_834.health_status }}">
+                    <i class="fa-solid {% if yak_834.health_status == 'healthy' %}fa-heart-pulse{% elif yak_834.health_status == 'sick' %}fa-circle-xmark{% else %}fa-hand-holding-medical{% endif %}" style="margin-right: 4px;"></i>
+                    {{ yak_834.get_health_status_display }}
+                </span>
+            </div>
+            
+            <div class="telemetry-stats">
+                <div class="stat-box">
+                    <span class="stat-label">Body Temp</span>
+                    <span class="stat-value">
+                        {{ yak_834_temp|floatformat:1 }}<span class="stat-unit">°C</span>
+                    </span>
+                    <span class="stat-status {% if yak_834_temp > 39.5 or yak_834_temp < 37.5 %}stat-status-abnormal{% else %}stat-status-normal{% endif %}">
+                        {% if yak_834_temp > 39.5 %}High Alert{% elif yak_834_temp < 37.5 %}Low Alert{% else %}Normal{% endif %}
+                    </span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Movement</span>
+                    <span class="stat-value">
+                        {% if yak_834_has_real %}{{ yak_834_move }}{% else %}Normal{% endif %}
+                    </span>
+                    <span class="stat-status {% if yak_834_has_real and yak_834_move < 100 or yak_834_move > 10000 %}stat-status-abnormal{% else %}stat-status-normal{% endif %}">
+                        {% if yak_834_has_real %}
+                            {% if yak_834_move == 0 %}Critical - No Activity{% elif yak_834_move < 100 %}Low Activity{% elif yak_834_move > 10000 %}Excessive Activity{% else %}Normal Activity{% endif %}
+                        {% else %}
+                            Demo Mode
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="telemetry-footer">
+                <div class="device-status-indicator {% if yak_834_online %}status-online{% else %}status-offline{% endif %}">
+                    <span class="status-dot"></span>
+                    <span>{% if yak_834_online %}Online{% else %}Offline{% endif %}</span>
+                </div>
+                <div class="last-updated">
+                    <i class="fa-regular fa-clock" style="margin-right: 2px;"></i>
+                    <span>Updated {{ yak_834_last_updated }}</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</div>
+
 <div class="card">
     <div class="card-body" style="padding: 1.5rem;">
         <form method="get" class="filters-form">
@@ -35,15 +91,6 @@
                         <option value="">All Devices</option>
                         {% for device in devices %}
                             <option value="{{ device.pk }}" {% if selected_device == device.pk|stringformat:"s" %}selected{% endif %}>{{ device.device_id }} - {{ device.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <select name="sensor_type" class="form-input">
-                        <option value="">All Sensor Types</option>
-                        {% for value, label in sensor_type_choices %}
-                            <option value="{{ value }}" {% if selected_sensor_type == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -80,8 +127,8 @@
                         <th>Timestamp</th>
                         <th>Animal</th>
                         <th>Device</th>
-                        <th>Sensor Type</th>
-                        <th>Reading</th>
+                        <th>Temperature</th>
+                        <th>Movement</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -101,9 +148,9 @@
                             <div class="text-muted">{{ reading.device.name }}</div>
                         </td>
                         <td>
-                            <span class="badge badge-{{ reading.sensor_type }}">{{ reading.get_sensor_type_display }}</span>
+                            <strong>{{ reading.temperature|floatformat:1 }}</strong> °C
                         </td>
-                        <td><strong>{{ reading.value }}</strong> {{ reading.unit }}</td>
+                        <td><strong>{{ reading.movement|floatformat:0 }}</strong> steps</td>
                         <td>
                             {% if reading.is_abnormal %}
                                 <span class="badge badge-abnormal">Abnormal</span>
@@ -148,7 +195,7 @@
         <div class="empty-state">
             <div style="font-size: 4rem; margin-bottom: 1rem;">Monitoring</div>
             <h3>No Sensor Readings Found</h3>
-            <p>{% if search_query or selected_animal or selected_device or selected_sensor_type or selected_start_date or selected_end_date or abnormal_only %}
+            <p>{% if search_query or selected_animal or selected_device or selected_start_date or selected_end_date or abnormal_only %}
                 No sensor readings match your search criteria. Try adjusting your filters.
             {% else %}
                 Sensor readings will appear here once IoT devices start reporting data.
@@ -159,6 +206,192 @@
 {% endif %}
 
 <style>
+/* Telemetry Grid & Card Styles */
+.telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.telemetry-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.telemetry-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.telemetry-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-color: var(--secondary-color);
+}
+
+.telemetry-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #10b981, #3b82f6);
+}
+
+.telemetry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+}
+
+.telemetry-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.telemetry-id {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.telemetry-name {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.125rem;
+}
+
+.health-indicator-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.health-healthy {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+.health-sick {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+.health-under_treatment {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.telemetry-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.25rem;
+}
+
+.stat-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: baseline;
+}
+
+.stat-unit {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-left: 0.125rem;
+}
+
+.stat-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.125rem;
+}
+
+.stat-status-normal {
+    color: #10b981;
+}
+
+.stat-status-abnormal {
+    color: #ef4444;
+}
+
+.telemetry-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.device-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-weight: 600;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-online .status-dot {
+    background-color: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: pulse-dot 1.5s infinite;
+}
+
+.status-offline .status-dot {
+    background-color: #64748b;
+}
+
+@keyframes pulse-dot {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.9);
+        opacity: 0.6;
+    }
+}
+
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -184,7 +417,7 @@
 
 .filters-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr auto auto;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto auto;
     gap: 1rem;
     align-items: end;
 }

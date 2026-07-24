@@ -15,6 +15,11 @@ class ReportsViewTests(TestCase):
             email='report@example.com'
         )
         
+        # Clean up existing database migration records to ensure isolation
+        Animal.objects.all().delete()
+        Device.objects.all().delete()
+        TreatmentProtocol.objects.all().delete()
+        
         # Create mock data
         self.animal = Animal.objects.create(
             animal_id='YAK-001',

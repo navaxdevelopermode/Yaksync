@@ -1,0 +1,644 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ animal.animal_id }} Telemetry Detail - YakSync{% endblock %}
+
+{% block page_title %}Animal Telemetry{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h2 class="page-title">{{ animal.animal_id }} - Monitoring Dashboard</h2>
+        <p class="page-subtitle">Detailed physiological telemetry history and sensor device status</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'monitoring:list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Monitoring
+        </a>
+    </div>
+</div>
+
+{% if not has_real_readings %}
+<div class="dev-warning-banner">
+    <div class="banner-content">
+        <i class="fa-solid fa-circle-info"></i>
+        <span><strong>Development Simulation Mode:</strong> Showing pre-loaded demo telemetry data. Real-time data from future ESP32 uploads will automatically replace this data upon arrival.</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Metrics Grid -->
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-icon temp-icon">
+            <i class="fa-solid fa-temperature-half"></i>
+        </div>
+        <div class="metric-info">
+            <span class="metric-label">Latest Temperature</span>
+            <h3 class="metric-value">{{ current_temp|floatformat:1 }} <span class="metric-unit">°C</span></h3>
+            <span class="trend-badge badge-{{ temp_trend_class }}">
+                <i class="fa-solid {% if temp_trend == 'Stable' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+                {{ temp_trend }}
+            </span>
+        </div>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-icon move-icon">
+            <i class="fa-solid fa-person-running"></i>
+        </div>
+        <div class="metric-info">
+            <span class="metric-label">Latest Movement</span>
+            <h3 class="metric-value">
+                {% if has_real_readings %}{{ current_move }}{% else %}Normal{% endif %}
+                <span class="metric-unit">{% if has_real_readings %}steps{% endif %}</span>
+            </h3>
+            <span class="trend-badge badge-{{ move_trend_class }}">
+                <i class="fa-solid {% if move_trend == 'Normal Activity' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+                {{ move_trend }}
+            </span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon device-icon {% if device_online %}online{% else %}offline{% endif %}">
+            <i class="fa-solid fa-microchip"></i>
+        </div>
+        <div class="metric-info">
+            <span class="metric-label">Sensor Connection</span>
+            <h3 class="metric-value">
+                {% if device_online %}Online{% else %}Offline{% endif %}
+            </h3>
+            <span class="battery-indicator">
+                <i class="fa-solid fa-battery-three-quarters" style="margin-right: 3px; color: {% if device.battery_level > 50 %}#10b981{% else %}#f59e0b{% endif %};"></i>
+                Battery: {{ device.battery_level }}%
+            </span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon clock-icon">
+            <i class="fa-regular fa-clock"></i>
+        </div>
+        <div class="metric-info">
+            <span class="metric-label">Last Transmission</span>
+            <h3 class="metric-value" style="font-size: 1.25rem; margin: 0.25rem 0;">
+                {{ last_updated_str }}
+            </h3>
+            <span class="transmission-time">
+                {{ last_updated_time|date:"M d, Y H:i:s" }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Grid Layout -->
+<div class="detail-grid">
+    <!-- Left Column: Details -->
+    <div class="info-column">
+        <!-- Animal Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-paw"></i> Animal Profile</h3>
+            </div>
+            <div class="card-body">
+                <table class="profile-table">
+                    <tr>
+                        <th>Yak ID</th>
+                        <td><strong>{{ animal.animal_id }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Name</th>
+                        <td>{% if animal.name and animal.name != 'Not specified' %}{{ animal.name }}{% else %}<span class="text-muted">Not specified</span>{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th>Species / Breed</th>
+                        <td>{{ animal.species }} ({{ animal.breed }})</td>
+                    </tr>
+                    <tr>
+                        <th>Calculated Age</th>
+                        <td>{{ animal.age }} years</td>
+                    </tr>
+                    <tr>
+                        <th>Registered Weight</th>
+                        <td>{{ animal.weight }} kg</td>
+                    </tr>
+                    <tr>
+                        <th>Reproductive Status</th>
+                        <td>
+                            <span class="badge badge-reproductive_indicator">
+                                {{ animal.get_reproductive_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Health Status</th>
+                        <td>
+                            <span class="badge badge-{{ animal.health_status }}">
+                                {{ animal.get_health_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% if animal.description %}
+                    <tr>
+                        <th>Physical Markings</th>
+                        <td class="profile-desc">{{ animal.description }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Device Status -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-wifi"></i> IoT Sensor Device Status</h3>
+            </div>
+            <div class="card-body">
+                <table class="profile-table">
+                    <tr>
+                        <th>Device ID</th>
+                        <td><code>{{ device.device_id }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Device Name</th>
+                        <td>{{ device.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Device Type</th>
+                        <td>{{ device.get_device_type_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Deployment Position</th>
+                        <td>{{ device.installation_location }}</td>
+                    </tr>
+                    <tr>
+                        <th>System Operating Status</th>
+                        <td>
+                            <span class="badge {% if device.status == 'active' %}badge-normal{% else %}badge-abnormal{% endif %}">
+                                {{ device.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Graphs & Analysis -->
+    <div class="graphs-column">
+        <!-- Trend Analysis -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-chart-simple"></i> Physiological Trend Analysis</h3>
+            </div>
+            <div class="card-body">
+                <div class="trend-analysis-row">
+                    <div class="trend-box border-{{ temp_trend_class }}">
+                        <span class="trend-label">Body Temperature</span>
+                        <div class="trend-status status-{{ temp_trend_class }}">
+                            <i class="fa-solid {% if temp_trend == 'Stable' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+                            {{ temp_trend }}
+                        </div>
+                        <p class="trend-description">
+                            {% if temp_trend == 'Stable' %}
+                                Body temperature readings remain in the acceptable physiological range (37.5°C to 39.5°C) and changes are gradual.
+                            {% else %}
+                                Warning! Spikes or readings outside normal ranges detected. Inspect the animal for possible infection, fever, or sensor detachment.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="trend-box border-{{ move_trend_class }}">
+                        <span class="trend-label">Movement / Steps</span>
+                        <div class="trend-status status-{{ move_trend_class }}">
+                            <i class="fa-solid {% if move_trend == 'Normal Activity' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+                            {{ move_trend }}
+                        </div>
+                        <p class="trend-description">
+                            {% if move_trend == 'Normal Activity' %}
+                                Activity level is consistent. The yak is moving normally in the pasture without high distress or immobility.
+                            {% else %}
+                                Warning! Sudden drastic increase or decline in step counts. This could indicate predator chasing, reproductive heat, or physical injury.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Telemetry Graphs -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-chart-line"></i> Recent Telemetry Trends (Last 5 Readings)</h3>
+            </div>
+            <div class="card-body">
+                <div class="charts-row">
+                    <div class="chart-wrapper">
+                        <h4 class="chart-heading">Body Temperature (°C)</h4>
+                        <div class="chart-container">
+                            <canvas id="tempDetailChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h4 class="chart-heading">Movement Level (Steps)</h4>
+                        <div class="chart-container">
+                            <canvas id="moveDetailChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Simulation Banner */
+.dev-warning-banner {
+    background-color: var(--badge-warning-bg);
+    border: 1px solid var(--warning-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+.dev-warning-banner i {
+    color: var(--warning-color);
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+.banner-content {
+    display: flex;
+    align-items: center;
+}
+
+/* Metrics Dashboard */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+.metric-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+}
+.metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+.temp-icon {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+}
+.move-icon {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+}
+.device-icon.online {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+}
+.device-icon.offline {
+    background: rgba(100, 116, 139, 0.12);
+    color: #64748b;
+}
+.clock-icon {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+}
+.metric-info {
+    display: flex;
+    flex-direction: column;
+}
+.metric-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.125rem 0;
+}
+.metric-unit {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+.trend-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: fit-content;
+}
+.badge-success {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+.badge-danger {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+.battery-indicator {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.transmission-time {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+/* Detail Columns */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+}
+.info-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.graphs-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Profile Tables */
+.profile-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.profile-table th {
+    padding: 0.75rem 0.5rem;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    width: 45%;
+}
+.profile-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+.profile-desc {
+    line-height: 1.4;
+    font-size: 0.8125rem !important;
+}
+
+/* Badges override */
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.badge-healthy {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+.badge-normal {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+.badge-reproductive_indicator {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+/* Trend Analysis Cards */
+.trend-analysis-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+.trend-box {
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+}
+.border-success {
+    border-left: 4px solid #10b981 !important;
+}
+.border-danger {
+    border-left: 4px solid #ef4444 !important;
+}
+.trend-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+.trend-status {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+.status-success {
+    color: #10b981;
+}
+.status-danger {
+    color: #ef4444;
+}
+.trend-description {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Chart Canvas layout */
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+.chart-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+.chart-heading {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+.chart-container {
+    position: relative;
+    height: 240px;
+    width: 100%;
+}
+
+@media (max-width: 1024px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    .trend-analysis-row {
+        grid-template-columns: 1fr;
+    }
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Parse the JSON data passed from views
+    const temps = JSON.parse('{{ temp_chart_json|safe }}');
+    const moves = JSON.parse('{{ move_chart_json|safe }}');
+    
+    // Highlight lines in RED if the trend analysis is Unstable or Abnormal Activity
+    const isTempUnstable = "{{ temp_trend }}" === "Unstable";
+    const tempBorderColor = isTempUnstable ? '#ef4444' : '#3b82f6';
+    const tempBgColor = isTempUnstable ? 'rgba(239, 68, 68, 0.05)' : 'rgba(59, 130, 246, 0.05)';
+    const tempPointColor = isTempUnstable ? '#ef4444' : '#2563eb';
+
+    const isMoveAbnormal = "{{ move_trend }}" === "Abnormal Activity";
+    const moveBorderColor = isMoveAbnormal ? '#ef4444' : '#10b981';
+    const moveBgColor = isMoveAbnormal ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)';
+    const movePointColor = isMoveAbnormal ? '#ef4444' : '#059669';
+
+    // 1. Temperature Chart Configuration
+    const tempCtx = document.getElementById('tempDetailChart').getContext('2d');
+    new Chart(tempCtx, {
+        type: 'line',
+        data: {
+            labels: temps.map(item => item.timestamp),
+            datasets: [{
+                label: 'Body Temp (°C)',
+                data: temps.map(item => item.value),
+                borderColor: tempBorderColor,
+                backgroundColor: tempBgColor,
+                pointBackgroundColor: tempPointColor,
+                pointBorderColor: '#ffffff',
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: tempPointColor,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                borderWidth: 3,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    min: 36.5,
+                    max: 41.5,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        callback: function(value) { return value.toFixed(1) + '°C'; }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ' Temp: ' + context.parsed.y.toFixed(2) + ' °C';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 2. Movement Chart Configuration
+    const moveCtx = document.getElementById('moveDetailChart').getContext('2d');
+    new Chart(moveCtx, {
+        type: 'line',
+        data: {
+            labels: moves.map(item => item.timestamp),
+            datasets: [{
+                label: 'Movement (Steps)',
+                data: moves.map(item => item.value),
+                borderColor: moveBorderColor,
+                backgroundColor: moveBgColor,
+                pointBackgroundColor: movePointColor,
+                pointBorderColor: '#ffffff',
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: movePointColor,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                borderWidth: 3,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: 2000,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        callback: function(value) { return value + ' steps'; }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ' Activity: ' + context.parsed.y + ' steps';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

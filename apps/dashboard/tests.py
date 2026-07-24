@@ -126,6 +126,10 @@ class WeatherCacheTests(TestCase):
 
 class DashboardUpdatesAPITests(TestCase):
     def setUp(self):
+        from apps.animals.models import Animal
+        from apps.devices.models import Device
+        Animal.objects.all().delete()
+        Device.objects.all().delete()
         self.client = Client()
         self.user = User.objects.create_user(username='apiuser', password='apipassword123')
         self.updates_url = reverse('dashboard:updates_api')

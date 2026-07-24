@@ -42,6 +42,14 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
+# Enable local Wi-Fi prototype access by allowing wildcard hosts in debug mode
+env_allowed_hosts = os.environ.get('ALLOWED_HOSTS')
+if env_allowed_hosts:
+    for host in env_allowed_hosts.split(';'):
+        ALLOWED_HOSTS.append(host.strip())
+elif DEBUG:
+    ALLOWED_HOSTS.append('*')
+
 
 # Application definition
 
@@ -148,7 +156,11 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+import sys
+if 'test' in sys.argv or os.environ.get('IS_TESTING') == 'True':
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (User-uploaded content)
 MEDIA_URL = 'media/'
@@ -177,4 +189,7 @@ FIREBASE_CONFIG = {
     'messagingSenderId': "YOUR_SENDER_ID",
     'appId': "YOUR_APP_ID"
 }
+
+# IoT API Key security configuration
+IOT_API_KEY = os.environ.get('IOT_API_KEY', 'yaksync-iot-secure-token-2026')
 

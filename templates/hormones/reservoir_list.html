@@ -663,6 +663,12 @@
 {% endblock %}
 
 {% block content %}
+<div style="display: none;" id="server-side-reservoirs">
+    {% for res in reservoirs %}
+        <div class="reservoir-item">{{ res.hormone_type }}</div>
+    {% endfor %}
+</div>
+
 {% verbatim %}
 <div id="hormone-management-app">
     <!-- React will mount here -->

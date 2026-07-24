@@ -47,9 +47,8 @@ class AlertSystemTests(TestCase):
         reading = SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='temperature',
-            value=Decimal('38.50'),
-            unit='celsius'
+            temperature=Decimal('38.50'),
+            movement=Decimal('500.00')
         )
         
         self.assertFalse(reading.is_abnormal)
@@ -60,9 +59,8 @@ class AlertSystemTests(TestCase):
         reading = SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='temperature',
-            value=Decimal('39.85'),
-            unit='celsius'
+            temperature=Decimal('39.85'),
+            movement=Decimal('500.00')
         )
         
         self.assertTrue(reading.is_abnormal)
@@ -80,9 +78,8 @@ class AlertSystemTests(TestCase):
         reading = SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='temperature',
-            value=Decimal('37.10'),
-            unit='celsius'
+            temperature=Decimal('37.10'),
+            movement=Decimal('500.00')
         )
         
         self.assertTrue(reading.is_abnormal)
@@ -97,9 +94,8 @@ class AlertSystemTests(TestCase):
         reading = SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='movement',
-            value=Decimal('0.00'),
-            unit='steps'
+            temperature=Decimal('38.50'),
+            movement=Decimal('0.00')
         )
         
         self.assertTrue(reading.is_abnormal)
@@ -114,9 +110,8 @@ class AlertSystemTests(TestCase):
         reading = SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='movement',
-            value=Decimal('45.00'),
-            unit='steps'
+            temperature=Decimal('38.50'),
+            movement=Decimal('45.00')
         )
         
         self.assertTrue(reading.is_abnormal)
@@ -131,9 +126,8 @@ class AlertSystemTests(TestCase):
         reading = SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='movement',
-            value=Decimal('10500.00'),
-            unit='steps'
+            temperature=Decimal('38.50'),
+            movement=Decimal('10500.00')
         )
         
         self.assertTrue(reading.is_abnormal)
@@ -148,9 +142,8 @@ class AlertSystemTests(TestCase):
         reading = SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='temperature',
-            value=Decimal('40.00'),
-            unit='celsius'
+            temperature=Decimal('40.00'),
+            movement=Decimal('500.00')
         )
         alert = Alert.objects.first()
         self.assertEqual(alert.status, 'active')
@@ -169,9 +162,8 @@ class AlertSystemTests(TestCase):
         reading = SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='movement',
-            value=Decimal('0.00'),
-            unit='steps'
+            temperature=Decimal('38.50'),
+            movement=Decimal('0.00')
         )
         alert = Alert.objects.first()
         self.assertEqual(alert.status, 'active')
@@ -191,17 +183,15 @@ class AlertSystemTests(TestCase):
         SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='temperature',
-            value=Decimal('40.00'),
-            unit='celsius'
+            temperature=Decimal('40.00'),
+            movement=Decimal('500.00')
         )
         # Create warning alert
         SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='movement',
-            value=Decimal('50.00'),
-            unit='steps'
+            temperature=Decimal('38.50'),
+            movement=Decimal('50.00')
         )
         
         self.client.login(username='vet_operator', password='Password123')

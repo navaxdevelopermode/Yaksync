@@ -7,6 +7,8 @@ from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 
+from apps.monitoring.views import SensorDataAPIView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(pattern_name='dashboard:index', permanent=False)),
@@ -20,6 +22,7 @@ urlpatterns = [
     path('alerts/', include('apps.alerts.urls')),
     path('reports/', include('apps.reports.urls')),
     path('activity-logs/', include('apps.logs.urls')),
+    path('api/sensor-data/', SensorDataAPIView.as_view(), name='api_sensor_data'),
 ]
 
 if settings.DEBUG:

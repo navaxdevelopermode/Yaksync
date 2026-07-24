@@ -283,7 +283,7 @@ def api_fetch_reservoirs(request):
         letter = chr(65 + index)  # Reservoir A, Reservoir B, etc.
         fill_pct = 0
         if res.initial_quantity > 0:
-            fill_pct = round((res.current_quantity / res.initial_quantity) * 100, 2)
+            fill_pct = float(round((res.current_quantity / res.initial_quantity) * 100, 2))
         data.append({
             'id': res.id,
             'label': f"Reservoir {letter}",

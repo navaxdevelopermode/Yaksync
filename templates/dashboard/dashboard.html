@@ -560,17 +560,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     const sortedReadings = readings.reverse();
                     
                     const tempData = sortedReadings
-                        .filter(r => r.sensor_type === 'temperature')
+                        .filter(r => r.temperature !== undefined && r.temperature !== null)
                         .map(r => ({
                             timestamp: r.timestamp && r.timestamp.toDate ? formatDate(r.timestamp.toDate()) : r.timestamp_label || '',
-                            value: parseFloat(r.value)
+                            value: parseFloat(r.temperature)
                         }));
                         
                     const moveData = sortedReadings
-                        .filter(r => r.sensor_type === 'movement')
+                        .filter(r => r.movement !== undefined && r.movement !== null)
                         .map(r => ({
                             timestamp: r.timestamp && r.timestamp.toDate ? formatDate(r.timestamp.toDate()) : r.timestamp_label || '',
-                            value: parseFloat(r.value)
+                            value: parseFloat(r.movement)
                         }));
                         
                     renderChart(tempData, moveData);

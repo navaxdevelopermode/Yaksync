@@ -8,7 +8,7 @@
 {% block content %}
 <div class="page-header">
     <div class="page-header-content">
-        <h2 class="page-title">{{ reading.get_sensor_type_display }} Reading</h2>
+        <h2 class="page-title">Telemetry Reading</h2>
         <p class="page-subtitle">{{ reading.animal.animal_id }} - {{ reading.timestamp|date:"F d, Y g:i A" }}</p>
     </div>
     <div class="page-actions">
@@ -26,7 +26,7 @@
                 <div class="detail-item">
                     <div class="detail-label">Sensor Type</div>
                     <div class="detail-value">
-                        <span class="badge badge-{{ reading.sensor_type }}">{{ reading.get_sensor_type_display }}</span>
+                        <span class="badge badge-temperature">Telemetry Reading</span>
                     </div>
                 </div>
                 <div class="detail-item">
@@ -43,9 +43,15 @@
 
             <div class="detail-row">
                 <div class="detail-item">
-                    <div class="detail-label">Value</div>
-                    <div class="detail-value reading-value">{{ reading.value }} {{ reading.unit }}</div>
+                    <div class="detail-label">Temperature</div>
+                    <div class="detail-value reading-value">{{ reading.temperature|floatformat:1 }} °C</div>
                 </div>
+                <div class="detail-item">
+                    <div class="detail-label">Movement</div>
+                    <div class="detail-value reading-value">{{ reading.movement|floatformat:0 }} steps</div>
+                </div>
+            </div>
+            <div class="detail-row">
                 <div class="detail-item">
                     <div class="detail-label">Timestamp</div>
                     <div class="detail-value">{{ reading.timestamp|date:"F d, Y g:i A" }}</div>
@@ -100,7 +106,8 @@
                         <tr>
                             <th>Timestamp</th>
                             <th>Device</th>
-                            <th>Reading</th>
+                            <th>Temperature</th>
+                            <th>Movement</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -110,7 +117,8 @@
                         <tr class="{% if item.is_abnormal %}row-abnormal{% endif %}">
                             <td>{{ item.timestamp|date:"M d, Y g:i A" }}</td>
                             <td>{{ item.device.device_id }}</td>
-                            <td><strong>{{ item.value }}</strong> {{ item.unit }}</td>
+                            <td><strong>{{ item.temperature|floatformat:1 }}</strong> °C</td>
+                            <td><strong>{{ item.movement|floatformat:0 }}</strong> steps</td>
                             <td>
                                 {% if item.is_abnormal %}
                                     <span class="badge badge-abnormal">Abnormal</span>
@@ -129,7 +137,7 @@
         {% else %}
             <div class="empty-state">
                 <h3>No Related History</h3>
-                <p>No other readings exist for this animal and sensor type yet.</p>
+                <p>No other readings exist for this animal yet.</p>
             </div>
         {% endif %}
     </div>

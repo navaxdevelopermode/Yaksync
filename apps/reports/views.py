@@ -79,7 +79,7 @@ def get_report_data(report_type, start_date=None, end_date=None, animal_id=None)
         if end_date:
             queryset = queryset.filter(timestamp__date__lte=end_date)
             
-        headers = ['Timestamp', 'Animal ID', 'Device', 'Sensor Type', 'Value', 'Unit', 'Status']
+        headers = ['Timestamp', 'Animal ID', 'Device', 'Temperature', 'Movement', 'Status']
         
         # Limit preview dashboard rows to 100, but show all in PDF
         for reading in queryset[:100]:
@@ -87,9 +87,8 @@ def get_report_data(report_type, start_date=None, end_date=None, animal_id=None)
                 'timestamp': reading.timestamp.strftime('%Y-%m-%d %H:%M'),
                 'animal_id': reading.animal.animal_id,
                 'device': reading.device.name,
-                'sensor_type': reading.get_sensor_type_display(),
-                'value': f"{reading.value:.2f}",
-                'unit': reading.unit,
+                'temperature': f"{reading.temperature:.1f} °C",
+                'movement': f"{int(reading.movement)} steps",
                 'is_abnormal': "Abnormal" if reading.is_abnormal else "Normal"
             })
             
@@ -381,8 +380,8 @@ class GenerateReportPDFView(LoginRequiredMixin, View):
             if end_date:
                 queryset = queryset.filter(timestamp__date__lte=end_date)
 
-            headers = ['Timestamp', 'Animal ID', 'Device', 'Sensor Type', 'Value', 'Unit', 'Status']
-            col_widths = [100, 65, 80, 100, 50, 50, 75]
+            headers = ['Timestamp', 'Animal ID', 'Device', 'Temperature', 'Movement', 'Status']
+            col_widths = [100, 70, 95, 80, 80, 95]
             
             table_data = [[p(h, th_style) for h in headers]]
             
@@ -392,9 +391,8 @@ class GenerateReportPDFView(LoginRequiredMixin, View):
                     p(reading.timestamp.strftime('%Y-%m-%d %H:%M'), td_style),
                     p(reading.animal.animal_id, td_style),
                     p(reading.device.name, td_style),
-                    p(reading.get_sensor_type_display(), td_style),
-                    p(f"{reading.value:.2f}", td_style),
-                    p(reading.unit, td_style),
+                    p(f"{reading.temperature:.1f} °C", td_style),
+                    p(f"{int(reading.movement)} steps", td_style),
                     p(status_str, td_style)
                 ])
 

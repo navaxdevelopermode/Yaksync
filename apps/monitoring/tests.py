@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
+import json
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -62,37 +63,45 @@ class MonitoringViewTests(TestCase):
         self.normal_reading = self.create_reading(
             animal=self.animal,
             device=self.device,
-            sensor_type='temperature',
-            value='38.4000',
-            unit='celsius',
+            temperature='38.4000',
+            movement='1200.0000',
             timestamp=datetime(2026, 2, 1, 10, 0, tzinfo=timezone.utc),
         )
         self.abnormal_reading = self.create_reading(
             animal=self.other_animal,
             device=self.other_device,
-            sensor_type='movement',
-            value='9500.0000',
-            unit='steps',
+            temperature='38.5000',
+            movement='12000.0000',
             is_abnormal=True,
             timestamp=datetime(2026, 2, 2, 11, 0, tzinfo=timezone.utc),
+        )
+        self.no_reading_animal = Animal.objects.create(
+            animal_id='YAK-003',
+            name='Sonam',
+            species='Yak',
+            breed='Himalayan',
+            age=2,
+            gender='female',
+            weight=Decimal('250.00'),
+            health_status='healthy',
+            reproductive_status='cycling',
+            created_by=self.user,
         )
 
     def create_reading(
         self,
         animal,
         device,
-        sensor_type='temperature',
-        value='37.5000',
-        unit='celsius',
+        temperature='37.5000',
+        movement='500.0000',
         is_abnormal=False,
         timestamp=None,
     ):
         reading = SensorReading.objects.create(
             animal=animal,
             device=device,
-            sensor_type=sensor_type,
-            value=Decimal(value),
-            unit=unit,
+            temperature=Decimal(temperature),
+            movement=Decimal(movement),
             is_abnormal=is_abnormal,
         )
         if timestamp:
@@ -126,7 +135,7 @@ class MonitoringViewTests(TestCase):
             self.create_reading(
                 animal=self.animal,
                 device=self.device,
-                value=str(37 + index),
+                temperature=str(37 + index),
                 timestamp=datetime(2026, 2, 3, index, 0, tzinfo=timezone.utc),
             )
 
@@ -145,22 +154,21 @@ class MonitoringViewTests(TestCase):
             reverse('monitoring:list'),
             {'abnormal_only': 'on'},
         )
-        self.assertContains(abnormal_response, '9500.0000')
-        self.assertNotContains(abnormal_response, '38.4000')
+        self.assertContains(abnormal_response, '12000')
+        self.assertNotContains(abnormal_response, '38.4')
 
         filtered_response = self.client.get(
             reverse('monitoring:list'),
             {
                 'animal': str(self.animal.pk),
                 'device': str(self.device.pk),
-                'sensor_type': 'temperature',
                 'start_date': '2026-02-01',
                 'end_date': '2026-02-01',
                 'search': 'Collar',
             },
         )
-        self.assertContains(filtered_response, '38.4000')
-        self.assertNotContains(filtered_response, '9500.0000')
+        self.assertContains(filtered_response, '38.4')
+        self.assertNotContains(filtered_response, '12000')
 
         invalid_response = self.client.get(
             reverse('monitoring:list'),
@@ -174,9 +182,7 @@ class MonitoringViewTests(TestCase):
         history_reading = self.create_reading(
             animal=self.animal,
             device=self.device,
-            sensor_type='temperature',
-            value='38.1000',
-            unit='celsius',
+            temperature='38.1000',
             timestamp=datetime(2026, 2, 1, 9, 0, tzinfo=timezone.utc),
         )
 
@@ -186,6 +192,45 @@ class MonitoringViewTests(TestCase):
         self.assertTemplateUsed(response, 'monitoring/sensor_reading_detail.html')
         self.assertContains(response, 'Reading Information')
         self.assertIn(history_reading, response.context['related_history'])
+
+    def test_yak_detail_url_resolves(self):
+        from .views import YakMonitoringDetailView
+        match = resolve(reverse('monitoring:yak_detail', kwargs={'animal_id': 'Yak-834'}))
+        self.assertEqual(match.func.view_class, YakMonitoringDetailView)
+
+    def test_yak_detail_requires_login(self):
+        response = self.client.get(reverse('monitoring:yak_detail', kwargs={'animal_id': 'Yak-834'}))
+        self.assertRedirects(
+            response,
+            f"/auth/login/?next={reverse('monitoring:yak_detail', kwargs={'animal_id': 'Yak-834'})}",
+        )
+
+    def test_yak_detail_view_renders_demo_data(self):
+        self.client.login(username='monitor_user', password='StrongPass123')
+        response = self.client.get(reverse('monitoring:yak_detail', kwargs={'animal_id': self.no_reading_animal.animal_id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'monitoring/yak_detail.html')
+        self.assertContains(response, 'Development Simulation Mode')
+        self.assertContains(response, 'Stable')
+        self.assertContains(response, 'Normal Activity')
+
+    def test_yak_detail_view_renders_real_data(self):
+        self.client.login(username='monitor_user', password='StrongPass123')
+        
+        self.create_reading(
+            animal=self.animal,
+            device=self.device,
+            temperature='38.2000',
+            movement='500.0000',
+            timestamp=datetime(2026, 2, 2, 9, 0, tzinfo=timezone.utc),
+        )
+        
+        response = self.client.get(reverse('monitoring:yak_detail', kwargs={'animal_id': self.animal.animal_id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'monitoring/yak_detail.html')
+        self.assertNotContains(response, 'Development Simulation Mode')
+        self.assertEqual(response.context['current_temp'], 38.2)
+        self.assertEqual(response.context['current_move'], 500)
 
 
 class TelemetryAPITests(TestCase):
@@ -216,16 +261,8 @@ class TelemetryAPITests(TestCase):
         SensorReading.objects.create(
             animal=self.animal,
             device=self.device,
-            sensor_type='temperature',
-            value=Decimal('38.2000'),
-            unit='celsius'
-        )
-        SensorReading.objects.create(
-            animal=self.animal,
-            device=self.device,
-            sensor_type='movement',
-            value=Decimal('450.0000'),
-            unit='steps'
+            temperature=Decimal('38.2000'),
+            movement=Decimal('450.0000')
         )
 
     def test_unauthenticated_api_redirect(self):
@@ -274,4 +311,78 @@ class TelemetryAPITests(TestCase):
         url = reverse('monitoring:api_animal_telemetry', kwargs={'animal_id': 99999})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+    def test_sensor_data_api_unauthorized(self):
+        url = reverse('api_sensor_data')
+        payload = {
+            'device_id': 'DEV-777',
+            'yak_id': 'YAK-777',
+            'temperature': 38.4,
+            'movement': 320.0
+        }
+        response = self.client.post(url, json.dumps(payload), content_type='application/json')
+        self.assertEqual(response.status_code, 401)
+
+    def test_sensor_data_api_success(self):
+        url = reverse('api_sensor_data')
+        payload = {
+            'device_id': 'DEV-777',
+            'yak_id': 'YAK-777',
+            'temperature': 38.4,
+            'movement': 320.0
+        }
+        response = self.client.post(
+            url, 
+            json.dumps(payload), 
+            content_type='application/json',
+            HTTP_X_API_KEY='yaksync-iot-secure-token-2026'
+        )
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(data['status'], 'success')
+        
+        # Verify database record creation
+        self.assertEqual(SensorReading.objects.filter(animal=self.animal).count(), 2)
+        latest_reading = SensorReading.objects.filter(animal=self.animal).order_by('-timestamp').first()
+        self.assertEqual(float(latest_reading.temperature), 38.4)
+        self.assertEqual(float(latest_reading.movement), 320.0)
+        
+        # Verify device last_communication timestamp is updated
+        self.device.refresh_from_db()
+        self.assertIsNotNone(self.device.last_communication)
+
+    def test_sensor_data_api_invalid_device(self):
+        url = reverse('api_sensor_data')
+        payload = {
+            'device_id': 'UNKNOWN-DEVICE',
+            'yak_id': 'YAK-777',
+            'temperature': 38.4,
+            'movement': 320.0
+        }
+        response = self.client.post(
+            url, 
+            json.dumps(payload), 
+            content_type='application/json',
+            HTTP_X_API_KEY='yaksync-iot-secure-token-2026'
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('is not registered', response.json()['error'])
+
+    def test_sensor_data_api_invalid_yak(self):
+        url = reverse('api_sensor_data')
+        payload = {
+            'device_id': 'DEV-777',
+            'yak_id': 'UNKNOWN-YAK',
+            'temperature': 38.4,
+            'movement': 320.0
+        }
+        response = self.client.post(
+            url, 
+            json.dumps(payload), 
+            content_type='application/json',
+            HTTP_X_API_KEY='yaksync-iot-secure-token-2026'
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('not found', response.json()['error'])
+
 
