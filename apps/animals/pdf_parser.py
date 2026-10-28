@@ -25,7 +25,7 @@ FALLBACK_DATA = [
         "vagina_temperature": 38.32
     },
     {
-        "yak_id": "Yak 806",
+        "yak_id": "Cow 806",
         "name": "Kyanamu",
         "date_of_birth": "2020-08-02",
         "dam": "543",
@@ -41,7 +41,7 @@ FALLBACK_DATA = [
         "vagina_temperature": 37.56
     },
     {
-        "yak_id": "Yak 842",
+        "yak_id": "Cow 842",
         "name": "Kankar Kyamo",
         "date_of_birth": "2021-07-17",
         "dam": "662",
@@ -57,7 +57,7 @@ FALLBACK_DATA = [
         "vagina_temperature": 39.35
     },
     {
-        "yak_id": "Yak 875",
+        "yak_id": "Buf 875",
         "name": "Not Recorded",
         "date_of_birth": "2021-08-31",
         "dam": "711",
@@ -73,7 +73,7 @@ FALLBACK_DATA = [
         "vagina_temperature": 39.32
     },
     {
-        "yak_id": "Yak 870",
+        "yak_id": "Buf 870",
         "name": "Not Recorded",
         "date_of_birth": "2021-08-25",
         "dam": "625",
@@ -89,7 +89,7 @@ FALLBACK_DATA = [
         "vagina_temperature": 37.36
     },
     {
-        "yak_id": "Yak 751",
+        "yak_id": "Cow 751",
         "name": "Not Recorded",
         "date_of_birth": "2019-06-02",
         "dam": "527",
@@ -137,7 +137,7 @@ FALLBACK_DATA = [
         "vagina_temperature": 38.17
     },
     {
-        "yak_id": "Yak 862",
+        "yak_id": "Buf 862",
         "name": "Not Recorded",
         "date_of_birth": "2021-08-09",
         "dam": "678",
@@ -153,7 +153,7 @@ FALLBACK_DATA = [
         "vagina_temperature": 38.47
     },
     {
-        "yak_id": "Yak 796",
+        "yak_id": "Cow 796",
         "name": "Kyanzangmu",
         "date_of_birth": "2020-06-11",
         "dam": "609",
@@ -169,7 +169,7 @@ FALLBACK_DATA = [
         "vagina_temperature": 39.31
     },
     {
-        "yak_id": "Yak 887",
+        "yak_id": "Buf 887",
         "name": "Not Recorded",
         "date_of_birth": "2022-01-24",
         "dam": "533",
